@@ -618,7 +618,7 @@ body.preloader-active #loginCard {
     background-clip: padding-box;
 }
 
-/* Elegant Page Staggered Drop-in Animation */
+/* Elegant Page Staggered Drop-in Animation (Entrance) */
 .page-fade-in {
     animation: dropInSpring 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
 }
@@ -633,10 +633,30 @@ body.preloader-active #loginCard {
     0% {
         opacity: 0;
         transform: translateY(-40px) scale(0.95) perspective(1000px) rotateX(-10deg);
+        filter: blur(12px);
     }
     100% {
         opacity: 1;
         transform: translateY(0) scale(1) perspective(1000px) rotateX(0);
+        filter: blur(0px);
+    }
+}
+
+/* Elegant Page Vanish Animation (Exit) */
+.page-exit-active {
+    animation: vanishOut 0.45s cubic-bezier(0.6, -0.28, 0.735, 0.045) both;
+}
+
+@keyframes vanishOut {
+    0% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+        filter: blur(0px);
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(40px) scale(0.95);
+        filter: blur(12px);
     }
 }
 
