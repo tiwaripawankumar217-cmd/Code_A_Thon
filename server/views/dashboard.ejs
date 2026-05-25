@@ -4,6 +4,37 @@
 <%- include('partials/sidebar') %>
 
 <div class="flex h-screen overflow-hidden w-full relative">
+    <!-- Dashboard Loading Overlay -->
+    <div id="dashboard-loader" class="fixed inset-0 z-[9999] bg-[#0d0d0d] flex flex-col items-center justify-center transition-opacity duration-700 ease-in-out">
+        <div class="relative w-24 h-24 mb-6">
+            <div class="absolute inset-0 border-2 border-[#FF6B35]/20 rounded-full"></div>
+            <div class="absolute inset-0 border-t-2 border-[#FF6B35] rounded-full animate-spin" style="animation-duration: 1s;"></div>
+            <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-4 h-4 rotate-45 bg-[#FF6B35] shadow-[0_0_15px_#FF6B35] animate-pulse"></div>
+        </div>
+        <h2 class="font-headline-lg text-[#FF6B35] text-xl tracking-[0.3em] uppercase drop-shadow-[0_0_10px_rgba(255,107,53,0.5)] animate-pulse mb-2">Decrypting Vault</h2>
+        <span class="font-body-sm text-white/50 uppercase tracking-[0.2em] text-xs" id="loader-status">Authenticating secure session...</span>
+    </div>
+
+    <script>
+        // Simple Dashboard Reveal Logic
+        document.addEventListener('DOMContentLoaded', () => {
+            const loader = document.getElementById('dashboard-loader');
+            const status = document.getElementById('loader-status');
+            
+            setTimeout(() => {
+                if(status) status.innerText = "Synchronizing Financial Data...";
+            }, 800);
+            
+            setTimeout(() => {
+                if(loader) {
+                    loader.style.opacity = '0';
+                    setTimeout(() => {
+                        loader.style.display = 'none';
+                    }, 700);
+                }
+            }, 1800);
+        });
+    </script>
     <!-- 3D Web3 Canvas Background -->
     <div id="web3-canvas-container" class="absolute inset-0 z-0 pointer-events-none opacity-80 mix-blend-screen" style="position: absolute; width: 100%; height: 100%; pointer-events: auto;"></div>
 
