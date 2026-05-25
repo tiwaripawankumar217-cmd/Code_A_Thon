@@ -1,0 +1,78 @@
+<% layout('layouts/boilerplate') -%>
+
+<%- include('partials/sidebar') %>
+
+<div class="flex h-screen overflow-hidden">
+    <!-- Main Content -->
+    <main class="flex-1 ml-0 md:ml-64 relative overflow-y-auto w-full">
+        
+        <div class="px-margin-mobile md:px-container-padding py-24 md:py-8 max-w-[1440px] mx-auto">
+            <!-- Page Header -->
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-section-gap gap-4">
+                <div>
+                    <h2 class="font-headline-lg text-headline-lg text-on-background">Overview</h2>
+                    <p class="text-on-surface-variant mt-1">Welcome back, <%= currentUser.firstName %>! Real-time security insights.</p>
+                </div>
+            </div>
+            
+            <!-- KPI Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-gutter mb-section-gap">
+                <!-- Card 1 -->
+                <div class="glass-card rounded-xl p-6 tilt-card group cursor-default" onmouseleave="resetTilt(this)" onmousemove="tilt(event, this)">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="w-10 h-10 rounded-full bg-primary-container/20 flex items-center justify-center text-primary-container">
+                            <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">account_balance</span>
+                        </div>
+                    </div>
+                    <p class="text-on-surface-variant text-sm font-medium mb-1">Total Processed Volume</p>
+                    <h3 class="font-display-lg text-display-lg text-on-background">$12.4M</h3>
+                </div>
+                <!-- Card 2 -->
+                <div class="glass-card rounded-xl p-6 tilt-card group cursor-default" onmouseleave="resetTilt(this)" onmousemove="tilt(event, this)">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="w-10 h-10 rounded-full bg-secondary-container/20 flex items-center justify-center text-secondary-container">
+                            <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">warning</span>
+                        </div>
+                    </div>
+                    <p class="text-on-surface-variant text-sm font-medium mb-1">Flagged Transactions</p>
+                    <h3 class="font-display-lg text-display-lg text-on-background">243</h3>
+                </div>
+                <!-- Card 3 -->
+                <div class="glass-card rounded-xl p-6 tilt-card group cursor-default" onmouseleave="resetTilt(this)" onmousemove="tilt(event, this)">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="w-10 h-10 rounded-full bg-tertiary-container/20 flex items-center justify-center text-tertiary-container">
+                            <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">health_and_safety</span>
+                        </div>
+                    </div>
+                    <p class="text-on-surface-variant text-sm font-medium mb-1">System Health Score</p>
+                    <h3 class="font-display-lg text-display-lg text-on-background"><%= currentUser.overallHealthScore %><span class="text-xl text-outline font-normal">/100</span></h3>
+                </div>
+            </div>
+            
+        </div>
+    </main>
+</div>
+
+<%- include('partials/mobile_nav') %>
+
+<script>
+    // Lightweight 3D Tilt Effect for cards
+    function tilt(event, element) {
+        if (!window.matchMedia("(pointer: fine)").matches) return;
+        const rect = element.getBoundingClientRect();
+        const x = event.clientX - rect.left;
+        const y = event.clientY - rect.top;
+        
+        const centerX = rect.width / 2;
+        const centerY = rect.height / 2;
+        
+        const rotateX = ((y - centerY) / centerY) * -5;
+        const rotateY = ((x - centerX) / centerX) * 5;
+        
+        element.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02, 1.02, 1.02)`;
+    }
+
+    function resetTilt(element) {
+        element.style.transform = `perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)`;
+    }
+</script>

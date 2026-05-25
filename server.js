@@ -59,9 +59,18 @@ app.use((req, res, next) => {
     next();
 });
 
-// --- Routes (To be implemented) ---
+// --- Routes ---
+const authRoutes = require('./server/routes/auth');
+const { isLoggedIn } = require('./server/middleware/auth');
+
+app.use('/auth', authRoutes);
+
 app.get('/', (req, res) => {
-    res.send('Fraud Dashboard Server Running');
+    res.redirect('/auth/login');
+});
+
+app.get('/dashboard', isLoggedIn, (req, res) => {
+    res.render('dashboard');
 });
 
 // --- Server Start ---
