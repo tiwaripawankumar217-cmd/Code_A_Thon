@@ -1,0 +1,82 @@
+<% layout('layouts/boilerplate') -%>
+
+<!-- Ambient Background Orbs -->
+<div class="bg-orb w-[600px] h-[600px] bg-[#FFF8E7] top-[-100px] left-[-100px]"></div>
+<div class="bg-orb w-[500px] h-[500px] bg-[#FFEDEA] bottom-[-50px] right-[-50px]" style="animation-delay: -10s;"></div>
+
+<main class="relative z-10 w-full max-w-[650px] px-margin-mobile md:px-0 py-12">
+    <!-- Premium Setup Alert Card -->
+    <div class="glass-card rounded-2xl p-8 shadow-ambient-amber flex flex-col items-center border border-amber-500/20" id="setupCard">
+        <!-- Header -->
+        <div class="flex flex-col items-center mb-6 w-full text-center">
+            <div class="w-16 h-16 rounded-full bg-amber-500/10 flex items-center justify-center mb-4 text-amber-500 animate-pulse">
+                <span class="material-symbols-outlined text-4xl" style="font-variation-settings: 'FILL' 1;">cloud_off</span>
+            </div>
+            <h1 class="font-headline-lg text-2xl md:text-3xl text-on-background font-bold mb-2">Google OAuth Configuration Required</h1>
+            <p class="font-body-sm text-sm text-on-surface-variant max-w-md">Your backend has intercepted an invalid client ID. To test with real Google logins, please configure your local client credentials.</p>
+        </div>
+
+        <!-- Direct Actions -->
+        <div class="w-full grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <!-- Sandbox Bypass Card -->
+            <div class="p-5 rounded-xl border border-primary/20 bg-primary/5 flex flex-col justify-between hover:scale-[1.01] transition-transform">
+                <div>
+                    <h3 class="text-sm font-bold text-primary mb-1 uppercase tracking-wider">Demo Sandbox Mode</h3>
+                    <p class="text-xs text-on-surface-variant mb-4">Instantly bypass the error and access your dashboards using a pre-configured secure developer profile.</p>
+                </div>
+                <a href="/auth/google/bypass" class="w-full bg-gradient-to-b from-[#ff8554] to-[#FF6B35] text-white font-semibold text-xs py-3 rounded-lg flex items-center justify-center gap-2 shadow-sm hover:shadow-md active:scale-95 transition-all">
+                    <span class="material-symbols-outlined text-[16px]">speed</span>
+                    Launch Demo Sandbox Login
+                </a>
+            </div>
+
+            <!-- Developer Portal Card -->
+            <div class="p-5 rounded-xl border border-outline-variant/30 bg-surface-container flex flex-col justify-between hover:scale-[1.01] transition-transform">
+                <div>
+                    <h3 class="text-sm font-bold text-on-surface mb-1 uppercase tracking-wider">Production Setup</h3>
+                    <p class="text-xs text-on-surface-variant mb-4">Complete credentials provisioning in the Google Cloud Console to log in with real accounts.</p>
+                </div>
+                <a href="https://console.cloud.google.com/" target="_blank" class="w-full border border-[#ff6b35]/25 hover:border-[#ff6b35]/50 bg-white/5 hover:bg-[#ff6b35]/5 text-[#ff6b35] font-semibold text-xs py-3 rounded-lg flex items-center justify-center gap-2 active:scale-95 transition-all">
+                    <span class="material-symbols-outlined text-[16px]">launch</span>
+                    Open Google Cloud Console
+                </a>
+            </div>
+        </div>
+
+        <!-- Configuration Steps Dropdown -->
+        <div class="w-full border-t border-outline-variant/20 pt-6">
+            <h3 class="font-bold text-xs text-on-surface uppercase tracking-wider mb-4 flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary text-[18px]">build</span>
+                Step-by-Step Configuration Guide
+            </h3>
+            
+            <div class="space-y-3.5 text-xs text-on-surface-variant">
+                <div class="flex items-start gap-2.5">
+                    <div class="w-5 h-5 rounded-full bg-surface-container flex items-center justify-center text-[10px] font-bold text-primary shrink-0">1</div>
+                    <p>Go to the **Google Cloud Console**, select or create a project, and configure the **OAuth consent screen** as **External**.</p>
+                </div>
+                <div class="flex items-start gap-2.5">
+                    <div class="w-5 h-5 rounded-full bg-surface-container flex items-center justify-center text-[10px] font-bold text-primary shrink-0">2</div>
+                    <p>Under **Credentials**, click **Create Credentials** > **OAuth client ID** > **Web application**.</p>
+                </div>
+                <div class="flex items-start gap-2.5">
+                    <div class="w-5 h-5 rounded-full bg-surface-container flex items-center justify-center text-[10px] font-bold text-primary shrink-0">3</div>
+                    <p>Add exactly `http://localhost:3200/auth/google/callback` to the **Authorized redirect URIs** list.</p>
+                </div>
+                <div class="flex items-start gap-2.5">
+                    <div class="w-5 h-5 rounded-full bg-surface-container flex items-center justify-center text-[10px] font-bold text-primary shrink-0">4</div>
+                    <p>Open your local <span class="bg-surface-container px-1.5 py-0.5 rounded font-mono font-bold text-primary">.env</span> file and replace the placeholders with your newly created keys:</p>
+                </div>
+            </div>
+
+            <!-- Code block -->
+            <div class="mt-4 bg-[#faf7f2] dark:bg-[#161718] border border-outline-variant/20 dark:border-white/5 rounded-xl p-4 font-mono text-[11px] text-on-surface leading-relaxed relative group select-all">
+                <span class="absolute top-2 right-2 text-[9px] font-bold uppercase text-on-surface-variant tracking-wider bg-outline-variant/30 px-1.5 py-0.5 rounded">ENV Setup</span>
+                <span class="text-orange-500"># Google Credentials Configured</span><br/>
+                GOOGLE_CLIENT_ID=<span class="text-emerald-500">your_copied_client_id.apps.googleusercontent.com</span><br/>
+                GOOGLE_CLIENT_SECRET=<span class="text-emerald-500">your_copied_client_secret</span><br/>
+                GOOGLE_CALLBACK_URL=http://localhost:3200/auth/google/callback
+            </div>
+        </div>
+    </div>
+</main>

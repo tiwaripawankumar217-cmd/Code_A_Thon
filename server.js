@@ -10,6 +10,7 @@ const engine = require('ejs-mate');
 const methodOverride=require('method-override')
 
 const User = require('./server/models/User');
+const GoogleStrategy = require('passport-google-oauth20').Strategy;
 
 const app = express();
 
@@ -50,6 +51,40 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 passport.use(new LocalStrategy(User.authenticate()));
+
+// --- Passport Google OAuth Config ---
+passport.use(new GoogleStrategy({
+    clientID: process.env.GOOGLE_CLIENT_ID || 'DUMMY_GOOGLE_CLIENT_ID',
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET || 'DUMMY_GOOGLE_CLIENT_SECRET',
+    callbackURL: process.env.GOOGLE_CALLBACK_URL || 'http://localhost:3200/auth/google/callback'
+}, async (accessToken, refreshToken, profile, done) => {
+    try {
+        let user = await User.findOne({ googleId: profile.id });
+        if (!user) {
+            const email = profile.emails && profile.emails[0] ? profile.emails[0].value : '';
+            if (email) {
+                user = await User.findOne({ username: email });
+            }
+            
+            if (!user) {
+                user = new User({
+                    googleId: profile.id,
+                    username: email || `google_${profile.id}@google.com`,
+                    firstName: profile.name && profile.name.givenName ? profile.name.givenName : 'Google',
+                    lastName: profile.name && profile.name.familyName ? profile.name.familyName : 'User'
+                });
+                await user.save();
+            } else {
+                user.googleId = profile.id;
+                await user.save();
+            }
+        }
+        return done(null, user);
+    } catch (err) {
+        return done(err, null);
+    }
+}));
+
 passport.serializeUser(User.serializeUser());
 passport.deserializeUser(User.deserializeUser());
 
@@ -72,6 +107,7 @@ const budgetRoutes = require('./server/routes/budget');
 const savingsRoutes = require('./server/routes/savings');
 const reportRoutes = require('./server/routes/report');
 const adviceRoutes = require('./server/routes/advice');
+const chatRoutes = require('./server/routes/chat');
 const { isLoggedIn } = require('./server/middleware/auth');
 
 app.use('/auth', authRoutes);
@@ -80,6 +116,7 @@ app.use('/budgets', budgetRoutes);
 app.use('/savings', savingsRoutes);
 app.use('/reports', reportRoutes);
 app.use('/advice', adviceRoutes);
+app.use('/chat', chatRoutes);
 app.use('/', dashboardRoutes);
 
 app.get('/', (req, res) => {
