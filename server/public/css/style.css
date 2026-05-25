@@ -618,9 +618,92 @@ body.preloader-active #loginCard {
     background-clip: padding-box;
 }
 
-/* Elegant Page Staggered Drop-in Animation (Entrance) */
+/* ============================================================
+   HEAVY 3D PAGE TRANSITIONS & OVERLAYS
+   ============================================================ */
+
+/* The overlay wrapper */
+.heavy-transition-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 99999;
+    pointer-events: none;
+    display: flex;
+}
+
+/* Individual massive columns/curtains */
+.heavy-transition-col {
+    position: absolute;
+    top: 0;
+    width: 20.5%; /* slight overlap to prevent gaps */
+    height: 100%;
+    background: #ff6b35; /* Brand orange heavy slam */
+    transform-origin: top;
+    /* Start position: Covering the screen */
+    transform: scaleY(1);
+    transition: transform 0.6s cubic-bezier(0.85, 0, 0.15, 1);
+    box-shadow: inset 0 0 50px rgba(0,0,0,0.2);
+}
+
+/* Optional alternating colors for a digital stripe effect */
+.heavy-transition-col:nth-child(even) {
+    background: #ab3500;
+}
+
+/* When entering a page, pull curtains UP */
+.heavy-transition-overlay.curtains-up .heavy-transition-col {
+    transform-origin: bottom;
+    transform: scaleY(0);
+}
+
+/* When exiting a page, drop curtains DOWN */
+.heavy-transition-overlay.curtains-down .heavy-transition-col {
+    transform-origin: top;
+    transform: scaleY(1);
+}
+
+/* Heavy 3D Main Content Entrance */
+.heavy-enter-active {
+    animation: heavyDeepZoomIn 1s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes heavyDeepZoomIn {
+    0% {
+        opacity: 0;
+        transform: perspective(1500px) translateZ(-500px) rotateX(20deg) translateY(100px);
+        filter: blur(20px);
+    }
+    100% {
+        opacity: 1;
+        transform: perspective(1500px) translateZ(0) rotateX(0deg) translateY(0);
+        filter: blur(0px);
+    }
+}
+
+/* Heavy 3D Main Content Exit */
+.heavy-exit-active {
+    animation: heavyFallBack 0.8s cubic-bezier(0.85, 0, 0.15, 1) both;
+}
+
+@keyframes heavyFallBack {
+    0% {
+        opacity: 1;
+        transform: perspective(1500px) translateZ(0) rotateX(0deg) scale(1);
+        filter: blur(0px);
+    }
+    100% {
+        opacity: 0;
+        transform: perspective(1500px) translateZ(-800px) rotateX(-25deg) scale(0.8);
+        filter: blur(30px);
+    }
+}
+
+/* Retain the original stagger classes for individual cards inside if needed */
 .page-fade-in {
-    animation: dropInSpring 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+    animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .stagger-1 { animation-delay: 0.1s; }
@@ -629,34 +712,14 @@ body.preloader-active #loginCard {
 .stagger-4 { animation-delay: 0.4s; }
 .stagger-5 { animation-delay: 0.5s; }
 
-@keyframes dropInSpring {
-    0% {
+@keyframes fadeInUp {
+    from {
         opacity: 0;
-        transform: translateY(-40px) scale(0.95) perspective(1000px) rotateX(-10deg);
-        filter: blur(12px);
+        transform: translateY(24px);
     }
-    100% {
+    to {
         opacity: 1;
-        transform: translateY(0) scale(1) perspective(1000px) rotateX(0);
-        filter: blur(0px);
-    }
-}
-
-/* Elegant Page Vanish Animation (Exit) */
-.page-exit-active {
-    animation: vanishOut 0.45s cubic-bezier(0.6, -0.28, 0.735, 0.045) both;
-}
-
-@keyframes vanishOut {
-    0% {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-        filter: blur(0px);
-    }
-    100% {
-        opacity: 0;
-        transform: translateY(40px) scale(0.95);
-        filter: blur(12px);
+        transform: translateY(0);
     }
 }
 
