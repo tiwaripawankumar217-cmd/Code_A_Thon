@@ -7,15 +7,17 @@ const passport = require('passport');
 const LocalStrategy = require('passport-local').Strategy;
 const path = require('path');
 const engine = require('ejs-mate');
+const methodOverride=require('method-override')
 
 const User = require('./server/models/User');
 
 const app = express();
 
 // --- Database Connection ---
-mongoose.connect(process.env.MONGODB_URI)
-    .then(() => console.log('✅ Connected to MongoDB'))
-    .catch(err => console.error('❌ MongoDB Connection Error:', err));
+mongoose.connect('mongodb://127.0.0.1:27017/codeathon_db')
+.then(()=>{
+    console.log("Connected to MongoDB")
+})
 
 // --- View Engine Setup ---
 app.engine('ejs', engine);
@@ -25,6 +27,7 @@ app.set('views', path.join(__dirname, 'server', 'views'));
 // --- Middleware ---
 app.use(express.static(path.join(__dirname, 'server', 'public')));
 app.use(express.urlencoded({ extended: true }));
+app.use(methodOverride('_method'))
 app.use(express.json());
 
 // --- Sessions ---
@@ -62,7 +65,7 @@ app.get('/', (req, res) => {
 });
 
 // --- Server Start ---
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`🚀 Server running on http://localhost:${PORT}`);
-});
+
+app.listen(3000,()=>{
+    console.log("server is running on port 3000")
+})
