@@ -50,11 +50,15 @@ router.get('/dashboard', async (req, res) => {
         const budgets = await Budget.find({ user: userId, periodMonth: currentMonth, periodYear: currentYear });
         
         // Calculate spending per category for current month
-        const monthlyExpenses = await Transaction.find({
-            user: userId,
-            type: 'expense',
-            date: { $gte: monthStart, $lte: monthEnd }
-        });
+        const [monthlyExpenses, monthlyIncomeTxns] = await Promise.all([
+            Transaction.find({ user: userId, type: 'expense', date: { $gte: monthStart, $lte: monthEnd } }),
+            Transaction.find({ user: userId, type: 'income', date: { $gte: monthStart, $lte: monthEnd } })
+        ]);
+
+        const monthlyIncomeTotal = monthlyIncomeTxns.reduce((s, t) => s + t.amount, 0);
+        const monthlyExpenseTotal = monthlyExpenses.reduce((s, t) => s + t.amount, 0);
+        const monthlySavings = monthlyIncomeTotal - monthlyExpenseTotal;
+        const savingsRate = monthlyIncomeTotal > 0 ? Math.round((monthlySavings / monthlyIncomeTotal) * 100) : 0;
 
         const spentMap = {};
         monthlyExpenses.forEach(t => {
@@ -174,7 +178,7 @@ router.get('/dashboard', async (req, res) => {
             if (riskVectors.otherThreatsPercent < 0) riskVectors.otherThreatsPercent = 0;
         }
 
-        res.render('dashboard', { totals, overallHealthScore, weeklyChartData, riskVectors });
+        res.render('dashboard', { totals, overallHealthScore, weeklyChartData, riskVectors, monthlyIncomeTotal, monthlyExpenseTotal, monthlySavings, savingsRate });
     } catch (e) {
         console.error("Error rendering dashboard:", e);
         res.status(500).send("Error rendering dashboard");

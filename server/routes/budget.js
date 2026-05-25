@@ -29,31 +29,36 @@ router.get('/', async (req, res) => {
         const currentYear = now.getFullYear();
         const { start: monthStart, end: monthEnd } = getCurrentMonthRange();
 
-        // 1. Fetch all budgets for the current month
         const budgets = await Budget.find({ user: userId, periodMonth: currentMonth, periodYear: currentYear });
 
-        // 2. Fetch expenses in the current month to compute spending per category
-        const monthlyExpenses = await Transaction.find({
-            user: userId,
-            type: 'expense',
-            date: { $gte: monthStart, $lte: monthEnd }
-        });
+        const [monthlyExpenses, monthlyIncomeTxns] = await Promise.all([
+            Transaction.find({ user: userId, type: 'expense', date: { $gte: monthStart, $lte: monthEnd } }),
+            Transaction.find({ user: userId, type: 'income', date: { $gte: monthStart, $lte: monthEnd } })
+        ]);
 
         const categorySpent = {};
         let spentTotal = 0;
-
         monthlyExpenses.forEach(t => {
             categorySpent[t.category] = (categorySpent[t.category] || 0) + t.amount;
             spentTotal += t.amount;
         });
 
         const limitTotal = budgets.reduce((sum, b) => sum + b.limitAmount, 0);
+        const monthlyIncome = monthlyIncomeTxns.reduce((s, t) => s + t.amount, 0);
+
+        const error = req.query.error || null;
+        const errorIncome = req.query.income ? parseFloat(req.query.income) : null;
+        const errorAttempted = req.query.attempted ? parseFloat(req.query.attempted) : null;
 
         res.render('budgets', {
             budgets,
             categorySpent,
             spentTotal,
-            limitTotal
+            limitTotal,
+            monthlyIncome,
+            error,
+            errorIncome,
+            errorAttempted
         });
     } catch (e) {
         console.error("Error loading budgets:", e);
@@ -61,13 +66,44 @@ router.get('/', async (req, res) => {
     }
 });
 
+// --- POST reset all budgets for current month ---
+router.post('/reset', async (req, res) => {
+    try {
+        const now = new Date();
+        await Budget.deleteMany({
+            user: req.user._id,
+            periodMonth: now.getMonth() + 1,
+            periodYear: now.getFullYear()
+        });
+        res.redirect('/budgets');
+    } catch (e) {
+        console.error("Error resetting budgets:", e);
+        res.redirect('/budgets');
+    }
+});
+
 // --- POST create/update budget limit ---
 router.post('/', async (req, res) => {
     try {
-        const { category, limitAmount, alertThreshold } = req.body;
+        const { limitAmount, alertThreshold } = req.body;
+        const category = 'Global'; // Hardcoded global budget
         const now = new Date();
         const currentMonth = now.getMonth() + 1;
         const currentYear = now.getFullYear();
+        const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+        const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+
+        // Validate: total budget must not exceed monthly income
+        const [monthlyIncomeTxns] = await Promise.all([
+            Transaction.find({ user: req.user._id, type: 'income', date: { $gte: monthStart, $lte: monthEnd } })
+        ]);
+
+        const totalIncome = monthlyIncomeTxns.reduce((s, t) => s + t.amount, 0);
+        const newTotal = parseFloat(limitAmount);
+
+        if (totalIncome > 0 && newTotal > totalIncome) {
+            return res.redirect(`/budgets?error=exceeds_income&income=${totalIncome.toFixed(2)}&attempted=${newTotal.toFixed(2)}`);
+        }
 
         await Budget.findOneAndUpdate(
             { user: req.user._id, category, periodMonth: currentMonth, periodYear: currentYear },

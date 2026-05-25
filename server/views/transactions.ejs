@@ -7,11 +7,31 @@
     <!-- Main Content -->
     <main class="flex-grow ml-0 md:ml-64 pt-24 md:pt-8 pb-24 px-margin-mobile md:px-container-padding max-w-[1440px] mx-auto overflow-y-auto relative">
         
-        <!-- Header -->
+        <!-- Page Header -->
         <div class="mb-section-gap">
             <h1 class="font-display-lg text-display-lg text-on-background mb-2">Transactions</h1>
             <p class="font-body-lg text-body-lg text-on-surface-variant">Monitor, add, and analyze your financial activities.</p>
         </div>
+
+        <!-- Server-side Error Banner -->
+        <% if (typeof error !== 'undefined' && error) { %>
+        <div class="mb-6 p-4 rounded-xl bg-error-container/30 border border-error/30 flex items-start gap-3">
+            <span class="material-symbols-outlined text-error mt-0.5" style="font-variation-settings: 'FILL' 1;">error</span>
+            <div>
+                <% if (error === 'insufficient_balance') { %>
+                    <p class="font-semibold text-error">Insufficient Balance</p>
+                    <p class="text-sm text-on-surface-variant mt-0.5">
+                        This expense was blocked. Your monthly income is $<%= typeof income !== 'undefined' && income ? income : '0' %>.
+                        You only have $<%= typeof remaining !== 'undefined' && remaining ? remaining : '0' %> remaining.
+                        Add income first before recording this expense.
+                    </p>
+                <% } %>
+            </div>
+            <button onclick="this.parentElement.remove()" class="ml-auto text-on-surface-variant hover:text-on-surface">
+                <span class="material-symbols-outlined text-sm">close</span>
+            </button>
+        </div>
+        <% } %>
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-gutter w-full">
             <!-- New Transaction Entry Card (Left Column) -->
@@ -199,10 +219,141 @@
     </main>
 </div>
 
+<!-- Budget Warning Modal -->
+<div id="budgetWarningModal" class="fixed inset-0 z-[100] bg-[#0d0d0d]/80 backdrop-blur-sm flex items-center justify-center opacity-0 pointer-events-none transition-all duration-300">
+    <div class="glass-card rounded-2xl p-8 max-w-[500px] w-full mx-4 transform scale-95 transition-transform duration-300" id="warningModalCard">
+        <div class="flex items-center gap-4 mb-6">
+            <div class="w-14 h-14 rounded-2xl bg-error-container flex items-center justify-center flex-shrink-0">
+                <span class="material-symbols-outlined text-error text-3xl" style="font-variation-settings: 'FILL' 1;">warning</span>
+            </div>
+            <div>
+                <h3 id="warningModalTitle" class="font-title-md text-title-md text-on-background">Warning</h3>
+                <p class="font-body-sm text-body-sm text-on-surface-variant">Review before proceeding</p>
+            </div>
+        </div>
+        <div id="warningModalBody" class="space-y-3 mb-8"></div>
+        <div class="flex gap-3">
+            <button onclick="dismissWarning()" class="flex-1 py-3 border border-outline-variant rounded-xl font-label-md text-label-md text-on-surface-variant hover:bg-surface-container transition-colors">
+                Cancel
+            </button>
+            <button onclick="proceedAnyway()" id="proceedBtn" class="flex-1 py-3 bg-secondary text-on-secondary rounded-xl font-label-md text-label-md hover:bg-secondary/90 transition-colors flex items-center justify-center gap-2">
+                <span class="material-symbols-outlined text-sm">add_circle</span>
+                Add Anyway
+            </button>
+        </div>
+    </div>
+</div>
+
 <!-- Mobile Bottom NavBar (Partial) -->
 <%- include('partials/mobile_nav') %>
 
 <script>
+    let _pendingForm = null;
+
+    // Intercept transaction form submission for client-side budget/balance check
+    const txnForm = document.querySelector('form[action="/transactions"]');
+    if (txnForm) {
+        txnForm.addEventListener('submit', async function(e) {
+            const type = document.getElementById('type').value;
+            if (type !== 'expense') return; // Only check expenses
+
+            e.preventDefault();
+            _pendingForm = this;
+
+            try {
+                const res = await fetch('/transactions/budget-info');
+                const data = await res.json();
+
+                const amount = parseFloat(document.getElementById('amount').value) || 0;
+                const category = document.getElementById('category').value;
+                const warnings = [];
+
+                // Check 1: Would total expenses exceed monthly income?
+                if (data.totalIncome > 0) {
+                    const newExpenseTotal = data.totalExpenses + amount;
+                    if (newExpenseTotal > data.totalIncome) {
+                        warnings.push({
+                            title: 'Insufficient Balance',
+                            message: `Add the income to continue expense. (Expense exceeds income by $${(newExpenseTotal - data.totalIncome).toFixed(2)})`
+                        });
+                    }
+                }
+
+                // Check 2: Would this exceed the global budget or is budget 0?
+                if (warnings.length === 0) {
+                    if (data.globalBudget === 0) {
+                        warnings.push({
+                            title: 'Budget is Zero',
+                            message: `Budget is 0. No expense can occur. Please increase budget to do more expense.`
+                        });
+                    } else {
+                        const newExpenseTotal = data.totalExpenses + amount;
+                        if (newExpenseTotal > data.globalBudget) {
+                            warnings.push({
+                                title: 'Budget Exceeded',
+                                message: `It is exceed. Increase budget to do more expense. (Expense exceeds budget by $${(newExpenseTotal - data.globalBudget).toFixed(2)})`
+                            });
+                        }
+                    }
+                }
+
+                if (warnings.length > 0) {
+                    showWarningModal(warnings);
+                } else {
+                    _pendingForm = null;
+                    this.submit();
+                }
+            } catch (err) {
+                // If API call fails, just submit normally
+                _pendingForm = null;
+                this.submit();
+            }
+        });
+    }
+
+    function showWarningModal(warnings) {
+        const modal = document.getElementById('budgetWarningModal');
+        const card = document.getElementById('warningModalCard');
+        const body = document.getElementById('warningModalBody');
+        const title = document.getElementById('warningModalTitle');
+        const proceedBtn = document.getElementById('proceedBtn');
+
+        title.textContent = warnings[0].title;
+
+        body.innerHTML = warnings.map(w => `
+            <div class="p-4 rounded-xl bg-error-container/40 border border-error/30">
+                <p class="font-semibold text-sm text-error mb-1">${w.title}</p>
+                <p class="text-xs text-on-surface-variant">${w.message}</p>
+            </div>
+        `).join('');
+
+        // Completely block it as requested
+        proceedBtn.style.display = 'none';
+
+        modal.classList.remove('opacity-0', 'pointer-events-none');
+        card.classList.remove('scale-95');
+        card.classList.add('scale-100');
+    }
+
+    function dismissWarning() {
+        const modal = document.getElementById('budgetWarningModal');
+        const card = document.getElementById('warningModalCard');
+        modal.classList.add('opacity-0', 'pointer-events-none');
+        card.classList.remove('scale-100');
+        card.classList.add('scale-95');
+        _pendingForm = null;
+    }
+
+    function proceedAnyway() {
+        // Obsolete as button is hidden
+        dismissWarning();
+    }
+
+    // Close modal on background click
+    document.getElementById('budgetWarningModal').addEventListener('click', function(e) {
+        if (e.target === this) dismissWarning();
+    });
+
     // Search Filter
     function filterTable() {
         const input = document.getElementById("tableSearch");
@@ -211,21 +362,16 @@
         const rows = tbody.getElementsByTagName("tr");
         
         for (let i = 0; i < rows.length; i++) {
-            // Ignore drawer expansion rows in search indexing
             if (rows[i].id.startsWith("drawer-")) continue;
-            
             const descCell = rows[i].getElementsByTagName("td")[1];
             const catCell = rows[i].getElementsByTagName("td")[2];
-            
             if (descCell || catCell) {
                 const descText = descCell.textContent || descCell.innerText;
                 const catText = catCell.textContent || catCell.innerText;
-                
                 if (descText.toLowerCase().indexOf(filter) > -1 || catText.toLowerCase().indexOf(filter) > -1) {
                     rows[i].style.display = "";
                 } else {
                     rows[i].style.display = "none";
-                    // Also hide corresponding drawer if open
                     const id = rows[i].id.replace("row-", "");
                     const drawer = document.getElementById("drawer-" + id);
                     if (drawer) drawer.style.display = "none";
@@ -234,15 +380,11 @@
         }
     }
 
-    // Toggle Flag Reasons Drawer
     function toggleDrawer(id) {
         const drawer = document.getElementById("drawer-" + id);
-        if (drawer) {
-            drawer.classList.toggle("hidden");
-        }
+        if (drawer) drawer.classList.toggle("hidden");
     }
 
-    // Interactive Orb shifts
     document.addEventListener('mousemove', (e) => {
         const orbs = document.querySelectorAll('.ambient-orb');
         if (orbs.length >= 2) {

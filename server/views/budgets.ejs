@@ -8,27 +8,65 @@
     <main class="flex-grow ml-0 md:ml-64 pt-24 md:pt-8 pb-24 px-margin-mobile md:px-container-padding max-w-[1440px] mx-auto overflow-y-auto relative">
         
         <!-- Header -->
-        <header class="flex flex-col md:flex-row md:justify-between md:items-end mb-10 gap-4">
+        <header class="flex flex-col md:flex-row md:justify-between md:items-end mb-6 gap-4">
             <div>
                 <p class="font-label-md text-label-md text-primary tracking-wider uppercase mb-1">Financial Operations</p>
                 <h2 class="font-display-lg text-display-lg text-on-background">Budget Oversight</h2>
             </div>
-            <button onclick="openModal()" class="bg-gradient-to-b from-[#FF8B5A] to-[#FF6B35] text-white px-6 py-3 rounded-xl font-label-md text-label-md shadow-[0_4px_14px_rgba(255,107,53,0.3)] hover:shadow-[0_6px_20px_rgba(255,107,53,0.4)] transition-all flex items-center gap-2 active:scale-95 group">
-                <span class="material-symbols-outlined group-hover:rotate-90 transition-transform">add</span>
-                New Budget
-            </button>
+            <div class="flex flex-wrap gap-3">
+                <!-- Reset Budgets Form -->
+                <form action="/budgets/reset" method="POST" onsubmit="return confirm('Reset all budgets for this month? This cannot be undone.')">
+                    <button type="submit" class="border border-outline-variant text-on-surface-variant px-5 py-3 rounded-xl font-label-md text-label-md hover:bg-surface-container hover:border-secondary hover:text-secondary transition-all flex items-center gap-2 active:scale-95">
+                        <span class="material-symbols-outlined text-[18px]">restart_alt</span>
+                        Reset Month
+                    </button>
+                </form>
+                <button onclick="openModal()" class="bg-gradient-to-b from-[#FF8B5A] to-[#FF6B35] text-white px-6 py-3 rounded-xl font-label-md text-label-md shadow-[0_4px_14px_rgba(255,107,53,0.3)] hover:shadow-[0_6px_20px_rgba(255,107,53,0.4)] transition-all flex items-center gap-2 active:scale-95 group">
+                    <span class="material-symbols-outlined group-hover:rotate-90 transition-transform">add</span>
+                    New Budget
+                </button>
+            </div>
         </header>
+
+        <!-- Error Banner -->
+        <% if (typeof error !== 'undefined' && error) { %>
+        <div class="mb-6 p-4 rounded-xl bg-error-container/30 border border-error/30 flex items-start gap-3">
+            <span class="material-symbols-outlined text-error mt-0.5" style="font-variation-settings: 'FILL' 1;">error</span>
+            <div>
+                <% if (error === 'exceeds_income') { %>
+                    <p class="font-semibold text-error">Budget Exceeds Monthly Income</p>
+                    <p class="text-sm text-on-surface-variant mt-0.5">
+                        Total budget of $<%= typeof errorAttempted !== 'undefined' && errorAttempted ? errorAttempted.toLocaleString() : '—' %>
+                        exceeds your monthly income of $<%= typeof errorIncome !== 'undefined' && errorIncome ? errorIncome.toLocaleString() : '—' %>.
+                        Please reduce the limit amount.
+                    </p>
+                <% } %>
+            </div>
+            <button onclick="this.parentElement.remove()" class="ml-auto text-on-surface-variant hover:text-on-surface">
+                <span class="material-symbols-outlined text-sm">close</span>
+            </button>
+        </div>
+        <% } %>
 
         <!-- Top Overview Grid -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-gutter mb-section-gap w-full">
-            <!-- Hero Card: Total Allocated Spend -->
+            <!-- Hero Card: Total Allocated Spend + Income Info -->
             <div class="glass-card rounded-2xl p-container-padding lg:col-span-2 relative overflow-hidden group">
                 <div class="absolute inset-0 bg-gradient-to-br from-white/40 to-transparent pointer-events-none rounded-2xl"></div>
+                <!-- Income vs Budget summary -->
+                <% const mIncome = (typeof monthlyIncome !== 'undefined') ? monthlyIncome : 0; %>
+                <% if (mIncome > 0) { %>
+                <div class="flex items-center gap-2 mb-4 px-3 py-2 rounded-lg bg-green-500/10 border border-green-500/20 w-fit">
+                    <span class="material-symbols-outlined text-green-500 text-[16px]">account_balance</span>
+                    <span class="text-xs font-medium text-green-500">Monthly Income: $<%= mIncome.toLocaleString(undefined, {minimumFractionDigits: 0}) %></span>
+                    <% const remainingBudget = mIncome - (typeof limitTotal !== 'undefined' ? limitTotal : 0); %>
+                    <span class="text-xs text-on-surface-variant ml-2">&mdash; $<%= Math.max(0, remainingBudget).toLocaleString(undefined, {minimumFractionDigits: 0}) %> unallocated</span>
+                </div>
+                <% } %>
                 <div class="flex justify-between items-start mb-8 relative z-10">
                     <div>
                         <h3 class="font-title-md text-title-md text-on-surface-variant mb-2">Total Monthly Spend Limit</h3>
                         <div class="flex items-baseline gap-3">
-                            <!-- In EJS we default to mock values if variables are not passed from backend -->
                             <span class="font-display-lg text-display-lg text-on-background">
                                 $<%= (typeof spentTotal !== 'undefined') ? spentTotal.toLocaleString(undefined, {minimumFractionDigits: 0}) : '0' %>
                             </span>
@@ -115,100 +153,87 @@
 
         <!-- Departmental Categories Header -->
         <div class="mb-8">
-            <h3 class="font-headline-lg-mobile text-headline-lg-mobile text-on-background mb-2">Category Limits</h3>
-            <p class="font-body-sm text-body-sm text-on-surface-variant">Detailed breakdown of monthly spending caps.</p>
+            <h3 class="font-headline-lg-mobile text-headline-lg-mobile text-on-background mb-2">Category Breakdown</h3>
+            <p class="font-body-sm text-body-sm text-on-surface-variant">See how your expenses are distributed across your global budget.</p>
         </div>
 
         <!-- Rings Grid -->
         <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-gutter pb-20">
             <% 
-                // Default mock budget array if no budgets are supplied from database query
-                let activeBudgets = [
-                    { category: 'Groceries', spent: 0, limitAmount: 0, percent: 0, colorClass: 'text-primary' },
-                    { category: 'Rent', spent: 0, limitAmount: 0, percent: 0, colorClass: 'text-tertiary' },
-                    { category: 'Entertainment', spent: 0, limitAmount: 0, percent: 0, colorClass: 'text-outline' },
-                    { category: 'Other', spent: 0, limitAmount: 0, percent: 0, colorClass: 'text-outline' }
-                ];
-                
-                if (typeof budgets !== 'undefined' && budgets.length > 0) {
-                    activeBudgets = budgets.map(function(b) {
-                        // Calculate spent from matching category if spent map is passed, else use dynamic defaults
-                        let spent = 0;
-                        if (typeof categorySpent !== 'undefined' && categorySpent[b.category]) {
-                            spent = categorySpent[b.category];
+                // We now iterate over actual expenses (categorySpent) and compare against the Global limit
+                let activeRings = [];
+                if (typeof categorySpent !== 'undefined') {
+                    for (const [cat, spent] of Object.entries(categorySpent)) {
+                        if (spent > 0) {
+                            // Calculate percentage against the GLOBAL limit (or 0 if no limit)
+                            const percent = (typeof limitTotal !== 'undefined' && limitTotal > 0) ? Math.round((spent / limitTotal) * 100) : 0;
+                            
+                            let colorClass = 'text-primary';
+                            if (percent >= 100) colorClass = 'text-secondary font-bold';
+                            else if (percent >= 80) colorClass = 'text-tertiary';
+                            else if (percent >= 50) colorClass = 'text-outline';
+
+                            activeRings.push({
+                                category: cat,
+                                spent: spent,
+                                percent: percent,
+                                colorClass: colorClass
+                            });
                         }
-                        const percent = b.limitAmount > 0 ? Math.round((spent / b.limitAmount) * 100) : 0;
-                        
-                        let colorClass = 'text-primary';
-                        if (percent >= 100) colorClass = 'text-secondary font-bold';
-                        else if (percent >= 80) colorClass = 'text-tertiary';
-                        else if (percent >= 50) colorClass = 'text-outline';
-                        
-                        return {
-                            id: b._id,
-                            category: b.category,
-                            spent: spent,
-                            limitAmount: b.limitAmount,
-                            percent: percent,
-                            colorClass: colorClass
-                        };
-                    });
+                    }
                 }
             %>
 
-            <% activeBudgets.forEach(function(b) { %>
-                <!-- Ring Card -->
-                <div class="glass-card rounded-2xl p-6 flex flex-col items-center text-center hover:translate-y-[-4px] transition-transform duration-300 relative group">
-                    <h4 class="font-title-md text-title-md mb-6 <%= b.percent >= 100 ? 'text-secondary' : 'text-on-background' %>">
-                        <%= b.category %>
-                    </h4>
-                    
-                    <!-- Circular SVG Ring Progress -->
-                    <div class="relative w-32 h-32 mb-6">
-                        <%
-                            const radius = 40;
-                            const circumference = 251.2; // 2 * pi * r
-                            const offset = circumference - (Math.min(b.percent, 100) / 100) * circumference;
-                        %>
-                        <svg class="w-full h-full" viewBox="0 0 100 100">
-                            <!-- Background ring -->
-                            <circle class="text-surface-container-high stroke-current" cx="50" cy="50" fill="transparent" r="40" stroke-width="8"></circle>
-                            <!-- Foreground indicator ring -->
-                            <circle class="<%= b.colorClass %> stroke-current progress-ring__circle" cx="50" cy="50" fill="transparent" r="40" 
-                                    stroke-dasharray="<%= circumference %>" 
-                                    stroke-dashoffset="<%= offset %>" 
-                                    stroke-linecap="round" stroke-width="8"></circle>
-                        </svg>
-                        <div class="absolute inset-0 flex items-center justify-center flex-col">
-                            <span class="font-headline-lg-mobile text-headline-lg-mobile <%= b.percent >= 100 ? 'text-secondary' : 'text-on-background' %>">
-                                <%= b.percent %>%
-                            </span>
-                        </div>
-                    </div>
-
-                    <div class="w-full pt-4 border-t border-outline-variant/20">
-                        <div class="flex justify-between font-body-sm text-body-sm mb-1">
-                            <span class="<%= b.percent >= 100 ? 'text-secondary font-medium' : 'text-on-surface-variant' %>">Spent</span>
-                            <span class="font-medium <%= b.percent >= 100 ? 'text-secondary font-bold' : 'text-on-surface' %>">
-                                $<%= b.spent.toLocaleString() %>
-                            </span>
-                        </div>
-                        <div class="flex justify-between font-body-sm text-body-sm">
-                            <span class="text-on-surface-variant">Limit</span>
-                            <span class="font-medium text-on-surface">$<%= b.limitAmount.toLocaleString() %></span>
-                        </div>
-                    </div>
-
-                    <!-- Delete button if custom database budget -->
-                    <% if (b.id) { %>
-                        <form action="/budgets/<%= b.id %>?_method=DELETE" method="POST" class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button type="submit" class="text-on-surface-variant hover:text-secondary p-1 rounded-full hover:bg-surface-container-high/60 transition-colors" onclick="return confirm('Remove budget limit for <%= b.category %>?')">
-                                <span class="material-symbols-outlined text-sm">close</span>
-                            </button>
-                        </form>
-                    <% } %>
+            <% if (activeRings.length === 0) { %>
+                <div class="col-span-1 md:col-span-2 xl:col-span-4 p-8 text-center bg-surface-container/30 rounded-2xl border border-outline-variant/30">
+                    <p class="text-on-surface-variant">No expenses recorded yet this month.</p>
                 </div>
-            <% }) %>
+            <% } else { %>
+                <% activeRings.forEach(function(b) { %>
+                    <!-- Ring Card -->
+                    <div class="glass-card rounded-2xl p-6 flex flex-col items-center text-center hover:translate-y-[-4px] transition-transform duration-300 relative group">
+                        <h4 class="font-title-md text-title-md mb-6 <%= b.percent >= 100 ? 'text-secondary' : 'text-on-background' %>">
+                            <%= b.category %>
+                        </h4>
+                        
+                        <!-- Circular SVG Ring Progress -->
+                        <div class="relative w-32 h-32 mb-6">
+                            <%
+                                const radius = 40;
+                                const circumference = 251.2; // 2 * pi * r
+                                const offset = circumference - (Math.min(b.percent, 100) / 100) * circumference;
+                            %>
+                            <svg class="w-full h-full" viewBox="0 0 100 100">
+                                <!-- Background ring -->
+                                <circle class="text-surface-container-high stroke-current" cx="50" cy="50" fill="transparent" r="40" stroke-width="8"></circle>
+                                <!-- Foreground indicator ring -->
+                                <circle class="<%= b.colorClass %> stroke-current progress-ring__circle" cx="50" cy="50" fill="transparent" r="40" 
+                                        stroke-dasharray="<%= circumference %>" 
+                                        stroke-dashoffset="<%= offset %>" 
+                                        stroke-linecap="round" stroke-width="8"></circle>
+                            </svg>
+                            <div class="absolute inset-0 flex items-center justify-center flex-col">
+                                <span class="font-headline-lg-mobile text-headline-lg-mobile <%= b.percent >= 100 ? 'text-secondary' : 'text-on-background' %>">
+                                    <%= b.percent %>%
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="w-full pt-4 border-t border-outline-variant/20">
+                            <div class="flex justify-between font-body-sm text-body-sm mb-1">
+                                <span class="<%= b.percent >= 100 ? 'text-secondary font-medium' : 'text-on-surface-variant' %>">Spent</span>
+                                <span class="font-medium <%= b.percent >= 100 ? 'text-secondary font-bold' : 'text-on-surface' %>">
+                                    $<%= b.spent.toLocaleString() %>
+                                </span>
+                            </div>
+                            <div class="flex justify-between font-body-sm text-body-sm">
+                                <span class="text-on-surface-variant">Global Budget</span>
+                                <span class="font-medium text-on-surface"><%= typeof limitTotal !== 'undefined' ? '$' + limitTotal.toLocaleString() : 'N/A' %></span>
+                            </div>
+                        </div>
+                    </div>
+                <% }) %>
+            <% } %>
         </div>
 
         <!-- NEW BUDGET MODAL WINDOW -->
@@ -218,25 +243,22 @@
                     <span class="material-symbols-outlined text-[20px]">close</span>
                 </button>
 
-                <h3 class="font-title-md text-title-md text-on-background mb-6 flex items-center gap-2">
+                <h3 class="font-title-md text-title-md text-on-background mb-2 flex items-center gap-2">
                     <span class="material-symbols-outlined text-primary">add_circle</span>
                     Set Spend Limit
                 </h3>
+                <% if (typeof monthlyIncome !== 'undefined' && monthlyIncome > 0) { %>
+                <div class="mb-4 p-3 rounded-lg bg-green-500/10 border border-green-500/20 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-green-500 text-[16px]">account_balance</span>
+                    <div class="text-xs">
+                        <span class="text-green-500 font-medium">Monthly Income: $<%= monthlyIncome.toLocaleString(undefined, {minimumFractionDigits: 0}) %></span>
+                        <span class="text-on-surface-variant ml-2">&mdash; Max total budget allowed: $<%= monthlyIncome.toLocaleString(undefined, {minimumFractionDigits: 0}) %></span>
+                    </div>
+                </div>
+                <% } %>
 
                 <form action="/budgets" method="POST" class="flex flex-col gap-4">
-                    <!-- Category Select -->
-                    <div>
-                        <label class="font-label-md text-label-md text-on-surface-variant block mb-1 uppercase tracking-wider" for="modalCategory">Category</label>
-                        <select class="w-full input-premium rounded-lg px-4 py-3 font-body-lg text-body-lg text-on-surface focus:ring-0 appearance-none" id="modalCategory" name="category" required>
-                            <option disabled selected value="">Select Category</option>
-                            <option value="Groceries">Groceries</option>
-                            <option value="Rent">Rent</option>
-                            <option value="Entertainment">Entertainment</option>
-                            <option value="Transfer">Transfer</option>
-                            <option value="Salary">Salary</option>
-                            <option value="Other">Other</option>
-                        </select>
-                    </div>
+                    <!-- Category Select (Removed per request, Hardcoded to Global on Backend) -->
 
                     <!-- Limit Amount -->
                     <div>

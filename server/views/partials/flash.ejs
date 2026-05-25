@@ -1,9 +1,9 @@
-<% if(typeof success !== 'undefined' && success.length) { %>
+<% if(typeof success !== 'undefined' && success && success.length) { %>
     <div class="fixed top-4 right-4 z-50 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg">
         <%= success %>
     </div>
 <% } %>
-<% if(typeof error !== 'undefined' && error.length) { %>
+<% if(typeof error !== 'undefined' && error && error.length) { %>
     <div class="fixed top-4 right-4 z-50 bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg">
         <%= error %>
     </div>
