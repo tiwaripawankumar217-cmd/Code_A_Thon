@@ -3,12 +3,14 @@ import joblib
 import numpy as np
 import pandas as pd
 from sklearn.ensemble import IsolationForest
+from sklearn.neighbors import LocalOutlierFactor
 from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 
 class FraudAnomalyDetector:
     def __init__(self):
         self.model = None
+        self.model_lof = None
         self.preprocessor = None
         self.is_fitted = False
         
@@ -27,11 +29,11 @@ class FraudAnomalyDetector:
         df = pd.read_csv(csv_path)
         
         # Extract features and targets
-        X = df[['amount', 'type', 'category', 'hour']]
+        X = df[['amount', 'type', 'category', 'hour', 'day_of_week', 'is_weekend', 'txns_last_24h', 'amount_last_24h']]
         
         # Define preprocessing pipeline
         categorical_features = ['type', 'category']
-        numeric_features = ['amount', 'hour']
+        numeric_features = ['amount', 'hour', 'day_of_week', 'is_weekend', 'txns_last_24h', 'amount_last_24h']
         
         self.preprocessor = ColumnTransformer(
             transformers=[
@@ -44,9 +46,12 @@ class FraudAnomalyDetector:
         X_processed = self.preprocessor.fit_transform(X)
         
         # Train Isolation Forest
-        # Set contamination to match the anomaly percentage in our synthetic dataset (~4%)
         self.model = IsolationForest(contamination=0.04, random_state=42)
         self.model.fit(X_processed)
+        
+        # Train Local Outlier Factor (LOF) for Ensembling
+        self.model_lof = LocalOutlierFactor(n_neighbors=20, contamination=0.04, novelty=True)
+        self.model_lof.fit(X_processed)
         
         # Compute decision scores for calibration
         decision_scores = self.model.decision_function(X_processed)
@@ -82,34 +87,52 @@ class FraudAnomalyDetector:
         type_ = str(txn_data.get('type', 'expense')).lower()
         category = str(txn_data.get('category', 'Other'))
         hour = int(txn_data.get('hour', 12))
+        day_of_week = int(txn_data.get('day_of_week', 0))
+        is_weekend = int(txn_data.get('is_weekend', 0))
+        txns_last_24h = int(txn_data.get('txns_last_24h', 0))
+        amount_last_24h = float(txn_data.get('amount_last_24h', 0))
         
         # Create single row DataFrame
         input_df = pd.DataFrame([{
             'amount': amount,
             'type': type_,
             'category': category,
-            'hour': hour
+            'hour': hour,
+            'day_of_week': day_of_week,
+            'is_weekend': is_weekend,
+            'txns_last_24h': txns_last_24h,
+            'amount_last_24h': amount_last_24h
         }])
         
         # Process and predict
         processed_input = self.preprocessor.transform(input_df)
         
         # Isolation Forest prediction: -1 for anomaly, 1 for normal
-        prediction = self.model.predict(processed_input)[0]
-        decision_score = self.model.decision_function(processed_input)[0]
+        prediction_iso = self.model.predict(processed_input)[0]
+        decision_score_iso = self.model.decision_function(processed_input)[0]
         
-        # Map decision score to 0.0 - 1.0 fraud probability scale
-        # Isolation Forest decision_function returns negative values for anomalies, positive for normal.
-        # We calibrate: lower decision score -> higher fraud score
-        calibrated_score = 0.0
-        if decision_score < 0:
-            # Anomaly region: map min_decision_score to 1.0 and 0.0 to 0.5
-            val = abs(decision_score) / abs(self.min_decision_score) if self.min_decision_score != 0 else 0
-            calibrated_score = 0.5 + (min(val, 1.0) * 0.5)
+        # LOF prediction
+        prediction_lof = self.model_lof.predict(processed_input)[0]
+        decision_score_lof = self.model_lof.decision_function(processed_input)[0]
+        
+        # Map Isolation Forest decision score to 0.0 - 1.0 fraud probability scale
+        calibrated_score_iso = 0.0
+        if decision_score_iso < 0:
+            val = abs(decision_score_iso) / abs(self.min_decision_score) if self.min_decision_score != 0 else 0
+            calibrated_score_iso = 0.5 + (min(val, 1.0) * 0.5)
         else:
-            # Normal region: map 0.0 to 0.5 and max_decision_score to 0.0
-            val = decision_score / self.max_decision_score if self.max_decision_score != 0 else 0
-            calibrated_score = 0.5 * (1.0 - min(val, 1.0))
+            val = decision_score_iso / self.max_decision_score if self.max_decision_score != 0 else 0
+            calibrated_score_iso = 0.5 * (1.0 - min(val, 1.0))
+            
+        # Ensemble: Average the scores or take the max (for stricter security, take max)
+        calibrated_score = calibrated_score_iso
+        
+        # If LOF also flags it, boost the score
+        if prediction_lof == -1:
+            calibrated_score = min(1.0, calibrated_score + 0.2)
+        
+        # Ensembled prediction
+        prediction = -1 if prediction_iso == -1 or prediction_lof == -1 else 1
             
         # Explainability analysis
         reasons = []
@@ -142,6 +165,14 @@ class FraudAnomalyDetector:
             if category == 'Transfer' and amount > 1000:
                 reasons.append(f"High-value money transfer flagged for secondary verification.")
 
+            # Rule 5: Velocity / Card Testing
+            if txns_last_24h > 5:
+                reasons.append(f"High transaction velocity detected ({txns_last_24h} transactions in 24 hours). Possible card testing.")
+                
+            # Rule 6: Weekend anomaly
+            if is_weekend and category == 'Transfer' and hour >= 0 and hour <= 5:
+                reasons.append("Weekend late-night transfer is a strong indicator of account takeover.")
+
             # Fallback if model flagged it but no specific statistics rule caught it
             if is_flagged and len(reasons) == 0:
                 reasons.append("Multi-dimensional anomaly detected (unusual combination of category, type, and transaction time).")
@@ -155,6 +186,7 @@ class FraudAnomalyDetector:
     def save(self, filepath):
         data = {
             'model': self.model,
+            'model_lof': self.model_lof,
             'preprocessor': self.preprocessor,
             'stats': self.stats,
             'min_decision_score': self.min_decision_score,
@@ -168,6 +200,7 @@ class FraudAnomalyDetector:
             raise FileNotFoundError(f"Saved model file not found at {filepath}")
         data = joblib.load(filepath)
         self.model = data['model']
+        self.model_lof = data.get('model_lof')
         self.preprocessor = data['preprocessor']
         self.stats = data['stats']
         self.min_decision_score = data['min_decision_score']

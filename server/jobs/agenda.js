@@ -24,6 +24,22 @@ agenda.define('detect-fraud', async (job) => {
     try {
         console.log(`[Agenda] Checking fraud for transaction ${transactionId}...`);
         
+        // 1.5 Calculate Time Features
+        const txnDate = new Date(txn.date);
+        const day_of_week = txnDate.getDay(); // 0 (Sun) to 6 (Sat)
+        const is_weekend = (day_of_week === 0 || day_of_week === 6) ? 1 : 0;
+        
+        // 1.6 Calculate Velocity Features (last 24 hours)
+        const twentyFourHoursAgo = new Date(txnDate.getTime() - (24 * 60 * 60 * 1000));
+        const recentTxns = await Transaction.find({
+            user: txn.user,
+            _id: { $ne: txn._id }, // Exclude current txn
+            date: { $gte: twentyFourHoursAgo, $lte: txnDate }
+        });
+        
+        const txns_last_24h = recentTxns.length;
+        const amount_last_24h = recentTxns.reduce((sum, t) => sum + t.amount, 0);
+        
         // 2. Call Flask ML service
         const mlServiceUrl = process.env.ML_SERVICE_URL || 'http://localhost:5001';
         const response = await fetch(`${mlServiceUrl}/predict`, {
@@ -33,7 +49,11 @@ agenda.define('detect-fraud', async (job) => {
                 amount: txn.amount,
                 type: txn.type,
                 category: txn.category,
-                date: txn.date
+                date: txn.date,
+                day_of_week,
+                is_weekend,
+                txns_last_24h,
+                amount_last_24h
             })
         });
 
