@@ -148,12 +148,26 @@
         geometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
         
         // Create a custom glowing material for the nodes
+        const textureCanvas = document.createElement('canvas');
+        textureCanvas.width = 64;
+        textureCanvas.height = 64;
+        const ctx = textureCanvas.getContext('2d');
+        ctx.font = 'bold 48px sans-serif';
+        ctx.fillStyle = '#FFFFFF';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('₹', 32, 36);
+        
+        const symbolTexture = new THREE.CanvasTexture(textureCanvas);
+
         const material = new THREE.PointsMaterial({
-            size: 0.6,
+            size: 3.5, // Increased size to make the symbol readable
             color: 0xFF6B35, // Brand Orange
             transparent: true,
-            opacity: 0.8,
-            blending: THREE.AdditiveBlending
+            opacity: 0.9,
+            map: symbolTexture,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false
         });
 
         const particlesMesh = new THREE.Points(geometry, material);
