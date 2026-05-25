@@ -8,7 +8,7 @@
     <main class="flex-1 ml-0 md:ml-64 relative overflow-y-auto w-full">
         <div class="px-margin-mobile md:px-container-padding py-24 md:py-8 max-w-[1440px] mx-auto">
             <!-- Page Header -->
-            <div class="flex flex-col xl:flex-row justify-between items-start xl:items-center mb-section-gap gap-6">
+            <div class="flex flex-col xl:flex-row justify-between items-start xl:items-center mb-section-gap gap-6 page-fade-in stagger-1">
                 <div>
                     <h2 class="font-headline-lg text-headline-lg text-on-background">System Overview</h2>
                     <p class="text-on-surface-variant mt-1 flex items-center gap-2">
@@ -17,7 +17,7 @@
                         <span>System Secure.</span>
                     </p>
                 </div>
-                <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full xl:w-auto">
+                <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full xl:w-auto xl:pr-44">
                     <!-- Controls Container -->
                     <div class="flex items-center gap-3">
                         <!-- Theme Toggle Pill -->
@@ -65,7 +65,7 @@
             </div>
 
             <!-- KPI Cards -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-gutter mb-section-gap">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-gutter mb-section-gap page-fade-in stagger-2">
                 <!-- Card 1: Total Processed Volume -->
                 <div class="glass-card rounded-xl p-6 tilt-card hover-lift group cursor-default" onmouseleave="resetTilt(this)" onmousemove="tilt(event, this)">
                     <div class="flex justify-between items-start mb-4">
@@ -162,7 +162,7 @@
                 const mRate = (typeof savingsRate !== 'undefined') ? savingsRate : 0;
                 const savingsPositive = mSavings >= 0;
             %>
-            <div class="glass-card rounded-xl p-6 mb-section-gap relative overflow-hidden hover-lift">
+            <div class="glass-card rounded-xl p-6 mb-section-gap relative overflow-hidden hover-lift page-fade-in stagger-3">
                 <div class="absolute inset-0 bg-gradient-to-r <%= savingsPositive ? 'from-green-500/5 via-transparent to-primary/5' : 'from-secondary/5 via-transparent to-error/5' %> pointer-events-none"></div>
                 <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative z-10">
                     <div class="flex items-center gap-4">
@@ -225,7 +225,7 @@
             </div>
 
             <!-- AI Financial Advisor Widget -->
-            <div class="glass-card rounded-xl p-6 mb-section-gap relative overflow-hidden tilt-card hover-lift" onmouseleave="resetTilt(this)" onmousemove="tilt(event, this)">
+            <div class="glass-card rounded-xl p-6 mb-section-gap relative overflow-hidden tilt-card hover-lift page-fade-in stagger-3" onmouseleave="resetTilt(this)" onmousemove="tilt(event, this)">
                 <div class="absolute inset-0 bg-gradient-to-r from-primary-container/10 via-transparent to-tertiary-container/10 pointer-events-none"></div>
                 <div class="relative z-10">
                     <div class="flex items-center justify-between mb-4">
@@ -252,9 +252,10 @@
             </div>
 
             <!-- Main Grid Layout -->
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-gutter">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-gutter page-fade-in stagger-4">
                 <!-- Volume Chart (Static Representation matching Figma) -->
                 <div class="lg:col-span-2 glass-card rounded-xl p-6 flex flex-col h-[450px] hover-lift">
+
                     <div class="flex justify-between items-center mb-6">
                         <h3 class="font-title-md text-title-md text-on-background">Transaction Volume vs Prevented Risk</h3>
                         <button class="text-on-surface-variant hover:text-primary transition-colors">

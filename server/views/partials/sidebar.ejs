@@ -2,9 +2,20 @@
 <div class="ambient-orb bg-[#FFEDEA] w-[600px] h-[600px] -top-[100px] -left-[100px]"></div>
 <div class="ambient-orb bg-[#FFF8E7] w-[500px] h-[500px] top-[40%] right-[-150px] animation-delay-2000"></div>
 
+<% 
+    let displayName = "Guest";
+    if (typeof currentUser !== 'undefined' && currentUser) {
+        if (currentUser.firstName || currentUser.lastName) {
+            displayName = (currentUser.firstName + ' ' + currentUser.lastName).trim();
+        } else {
+            displayName = currentUser.username;
+        }
+    }
+%>
+
 <!-- SideNavBar -->
 <nav class="hidden md:flex flex-col h-full p-6 border-r border-outline-variant/20 bg-surface-container-low dark:bg-surface-container shadow-[20px_0_40px_rgba(184,134,11,0.08)] fixed left-0 top-0 w-64 z-50">
-    <div class="mb-10">
+    <div class="mb-6">
         <div class="flex items-center gap-3">
             <div class="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-on-primary font-bold">
                 <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">security</span>
@@ -15,6 +26,23 @@
             </div>
         </div>
     </div>
+
+    <!-- Logged in User Section (Desktop) -->
+    <% if (typeof currentUser !== 'undefined' && currentUser) { %>
+    <div class="mb-6 p-3.5 bg-[#FAF7F2] dark:bg-white/5 border border-outline-variant/20 dark:border-white/5 rounded-2xl flex items-center gap-3 shadow-sm">
+        <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-[#ff8555] to-[#ff6b35] flex items-center justify-center text-white font-headline-lg text-sm shadow-sm select-none shrink-0 font-semibold">
+            <%= displayName.charAt(0).toUpperCase() %>
+        </div>
+        <div class="overflow-hidden">
+            <p class="font-headline-lg text-xs text-on-surface truncate font-bold" title="<%= displayName %>"><%= displayName %></p>
+            <div class="flex items-center gap-1.5 mt-0.5">
+                <span class="inline-block w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
+                <span class="text-[10px] font-semibold text-on-surface-variant/80 uppercase tracking-wider">Authorized</span>
+            </div>
+        </div>
+    </div>
+    <% } %>
+
     <div class="flex-1 space-y-2">
         <a class="<%= (typeof activePage !== 'undefined' && (activePage === '/dashboard' || activePage === '/')) ? 'bg-primary-container/20 text-on-primary-container font-bold' : 'text-on-surface-variant hover:text-on-surface' %> rounded-lg px-4 py-3 flex items-center gap-3 hover:bg-surface-container-highest transition-all duration-300 hover:translate-x-1" href="/dashboard">
             <span class="material-symbols-outlined" style="<%= (typeof activePage !== 'undefined' && (activePage === '/dashboard' || activePage === '/')) ? 'font-variation-settings: \'FILL\' 1;' : '' %>">dashboard</span>
@@ -50,7 +78,17 @@
 <!-- Mobile TopBar -->
 <header class="md:hidden flex justify-between items-center px-margin-mobile h-20 w-full bg-surface/60 backdrop-blur-xl border-b border-white/20 fixed top-0 z-40 shadow-sm">
     <div class="font-headline-lg-mobile text-headline-lg-mobile font-bold text-primary">FraudGuard</div>
-    <div class="flex items-center gap-2">
+    <div class="flex items-center gap-3">
+        <!-- Logged in User Section (Mobile) -->
+        <% if (typeof currentUser !== 'undefined' && currentUser) { %>
+        <div class="flex items-center gap-2 bg-[#FAF7F2] dark:bg-white/5 border border-outline-variant/15 dark:border-white/5 px-2.5 py-1 rounded-full shadow-sm max-w-[130px] shrink-0">
+            <div class="w-6.5 h-6.5 rounded-full bg-gradient-to-tr from-[#ff8555] to-[#ff6b35] flex items-center justify-center text-white font-bold text-xs select-none">
+                <%= displayName.charAt(0).toUpperCase() %>
+            </div>
+            <span class="text-[11px] font-bold text-on-surface truncate max-w-[70px]" title="<%= displayName %>"><%= displayName.split(' ')[0] %></span>
+        </div>
+        <% } %>
+
         <!-- Theme Toggle Pill -->
         <button onclick="toggleTheme()" class="theme-toggle-pill relative flex items-center w-[56px] h-[28px] rounded-full cursor-pointer transition-all duration-300" style="background: rgba(141, 113, 104, 0.15);" title="Toggle Dark/Light Mode" type="button">
             <span class="sun-icon absolute left-[6px] material-symbols-outlined text-[14px] text-amber-500 transition-opacity duration-300" style="font-variation-settings: 'FILL' 1;">light_mode</span>

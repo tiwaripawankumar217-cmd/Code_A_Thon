@@ -4,11 +4,18 @@ const passportLocalMongoose = require('passport-local-mongoose');
 const userSchema = new mongoose.Schema({
     firstName: {
         type: String,
-        required: true
+        required: false,
+        default: ''
     },
     lastName: {
         type: String,
-        required: true
+        required: false,
+        default: ''
+    },
+    googleId: {
+        type: String,
+        unique: true,
+        sparse: true
     },
     overallHealthScore: {
         type: Number,
