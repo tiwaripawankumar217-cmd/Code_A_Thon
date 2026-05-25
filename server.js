@@ -76,19 +76,27 @@ app.get('/', (req, res) => {
     res.redirect('/auth/login');
 });
 
-// SSE Placeholder to satisfy EventSource connections on frontend and prevent errors
+const { addClient, removeClient } = require('./server/utils/sse');
+
+// SSE Endpoint for real-time fraud alerts
 app.get('/stream', isLoggedIn, (req, res) => {
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
     res.flushHeaders();
 
+    // Register this client connection
+    const userId = req.user._id;
+    addClient(userId, res);
+
+    // Keep connection alive with periodic pings
     const interval = setInterval(() => {
         res.write('data: {"type": "ping"}\n\n');
     }, 30000);
 
     req.on('close', () => {
         clearInterval(interval);
+        removeClient(userId, res);
     });
 });
 

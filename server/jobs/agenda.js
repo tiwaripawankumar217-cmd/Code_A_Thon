@@ -1,6 +1,7 @@
 const { Agenda } = require('agenda');
 const { MongoBackend } = require('@agendajs/mongo-backend');
 const Transaction = require('../models/Transaction');
+const { sendFraudAlert } = require('../utils/sse');
 
 const agenda = new Agenda({
     backend: new MongoBackend({ 
@@ -49,6 +50,18 @@ agenda.define('detect-fraud', async (job) => {
         await txn.save();
         
         console.log(`[Agenda] Transaction ${transactionId} fraud check complete. isFlagged: ${result.isFlagged}`);
+        
+        // 4. Send SSE Alert if flagged
+        if (result.isFlagged) {
+            sendFraudAlert(txn.user, {
+                type: 'fraud_alert',
+                transactionId: txn._id,
+                amount: txn.amount,
+                category: txn.category,
+                score: result.fraudScore,
+                reasons: result.flagReasons
+            });
+        }
         
     } catch (error) {
         console.error(`[Agenda] Error during detect-fraud for transaction ${transactionId}:`, error.message);
