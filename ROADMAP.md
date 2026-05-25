@@ -419,13 +419,13 @@ evtSource.onmessage = (event) => {
 |-------|-----------------------------|----------|---------|
 | 0     | Project setup & models      | 1 hr     | ✅ DONE |
 | 1     | Auth (routes + views)       | 1.5 hrs  | ✅ DONE |
-| 2     | Transaction CRUD            | 2 hrs    | ⬜      |
-| 3     | Dashboard + Charts          | 3 hrs    | ⬜      |
-| 4     | Budget management           | 1.5 hrs  | ⬜      |
+| 2     | Transaction CRUD            | 2 hrs    | ✅ DONE |
+| 3     | Dashboard + Charts          | 3 hrs    | ✅ DONE |
+| 4     | Budget management           | 1.5 hrs  | ✅ DONE |
 | 5     | Python ML service           | 2-3 hrs  | ✅ DONE |
-| 6     | Agenda jobs                 | 1 hr     | ⬜      |
-| 7     | SSE real-time alerts        | 1 hr     | ⬜      |
-| 8     | Styling & polish            | 3-4 hrs  | ⬜      |
+| 6     | Agenda jobs                 | 1 hr     | ✅ DONE |
+| 7     | SSE real-time alerts        | 1 hr     | ✅ DONE |
+| 8     | Styling & polish            | 3-4 hrs  | ✅ DONE |
 |       | **Buffer / debugging**      | **2 hrs**|         |
 |       | **Total**                   | ~18 hrs  |         |
 

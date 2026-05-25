@@ -3,10 +3,13 @@
 <!-- SideNavBar and Mobile TopBar (Partials) -->
 <%- include('partials/sidebar') %>
 
-<div class="flex h-screen overflow-hidden w-full">
+<div class="flex h-screen overflow-hidden w-full relative">
+    <!-- 3D Web3 Canvas Background -->
+    <div id="web3-canvas-container" class="absolute inset-0 z-0 pointer-events-none opacity-80 mix-blend-screen" style="position: absolute; width: 100%; height: 100%; pointer-events: auto;"></div>
+
     <!-- Main Content -->
-    <main class="flex-1 ml-0 md:ml-64 relative overflow-y-auto w-full">
-        <div class="px-margin-mobile md:px-container-padding py-24 md:py-8 max-w-[1440px] mx-auto">
+    <main class="flex-1 ml-0 md:ml-64 relative z-10 overflow-y-auto w-full pointer-events-none">
+        <div class="px-margin-mobile md:px-container-padding py-24 md:py-8 max-w-[1440px] mx-auto relative z-10 pointer-events-auto">
             <!-- Page Header -->
             <div class="flex flex-col xl:flex-row justify-between items-start xl:items-center mb-section-gap gap-6 page-fade-in stagger-1">
                 <div>
@@ -20,6 +23,7 @@
                 <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full xl:w-auto xl:pr-44">
                     <!-- Controls Container -->
                     <div class="flex items-center gap-3">
+
                         <!-- Theme Toggle Pill -->
                         <button onclick="toggleTheme()" class="theme-toggle-pill relative flex items-center w-[56px] h-[28px] rounded-full cursor-pointer transition-all duration-300" style="background: rgba(141, 113, 104, 0.15);" title="Toggle Dark/Light Mode" type="button">
                             <span class="sun-icon absolute left-[6px] material-symbols-outlined text-[14px] text-amber-500 transition-opacity duration-300" style="font-variation-settings: 'FILL' 1;">light_mode</span>
@@ -547,3 +551,4 @@
 
 </script>
 <script src="/js/sse.js"></script>
+<script src="/js/web3-universe.js"></script>
