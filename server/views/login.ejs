@@ -19,6 +19,17 @@
 <div class="bg-orb w-[600px] h-[600px] bg-[#FFF8E7] top-[-100px] left-[-100px]"></div>
 <div class="bg-orb w-[500px] h-[500px] bg-[#FFEDEA] bottom-[-50px] right-[-50px]" style="animation-delay: -10s;"></div>
 
+<!-- Post-Login Loading Overlay -->
+<div id="post-login-loader" class="fixed inset-0 z-[10000] bg-[#0d0d0d] flex flex-col items-center justify-center transition-opacity duration-700 ease-in-out" style="display: none; opacity: 0;">
+    <div class="relative w-24 h-24 mb-6">
+        <div class="absolute inset-0 border-2 border-[#FF6B35]/20 rounded-full"></div>
+        <div class="absolute inset-0 border-t-2 border-[#FF6B35] rounded-full animate-spin" style="animation-duration: 1s;"></div>
+        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-4 h-4 rotate-45 bg-[#FF6B35] shadow-[0_0_15px_#FF6B35] animate-pulse"></div>
+    </div>
+    <h2 class="font-headline-lg text-[#FF6B35] text-xl tracking-[0.3em] uppercase drop-shadow-[0_0_10px_rgba(255,107,53,0.5)] animate-pulse mb-2">Decrypting Vault</h2>
+    <span class="font-body-sm text-white/50 uppercase tracking-[0.2em] text-xs" id="post-login-status">Authenticating secure session...</span>
+</div>
+
 <!-- Main Container -->
 <main class="relative z-10 w-full max-w-[480px] px-margin-mobile md:px-0">
     <!-- Glassmorphism Login Card -->
@@ -32,7 +43,7 @@
             <p class="font-body-sm text-body-sm text-on-surface-variant text-center">Secure your enterprise access</p>
         </div>
         <!-- Login Form -->
-        <form class="w-full space-y-6" action="/auth/login" method="POST">
+        <form id="loginForm" class="w-full space-y-6" action="/auth/login" method="POST">
             <!-- Email Field -->
             <div class="space-y-2">
                 <label class="font-label-md text-label-md text-on-surface block" for="username">Email</label>
@@ -288,13 +299,42 @@
     }
 
     function selectGoogleAccount(name, email) {
-        document.getElementById('googleLoading').classList.remove('hidden');
-        document.getElementById('googleLoadingText').innerHTML = `Connecting as <strong>${name}</strong>...`;
+        closeGoogleModal();
+        triggerPostLoginLoader(() => {
+            window.location.href = `/auth/google/signin?name=${encodeURIComponent(name)}&email=${encodeURIComponent(email)}`;
+        });
+    }
+
+    function triggerPostLoginLoader(callback) {
+        const loader = document.getElementById('post-login-loader');
+        const status = document.getElementById('post-login-status');
+        
+        loader.style.display = 'flex';
+        // Allow display: flex to apply
+        setTimeout(() => {
+            loader.style.opacity = '1';
+        }, 10);
         
         setTimeout(() => {
-            window.location.href = `/auth/google/signin?name=${encodeURIComponent(name)}&email=${encodeURIComponent(email)}`;
-        }, 1200);
+            if(status) status.innerText = "Synchronizing Financial Data...";
+        }, 800);
+        
+        setTimeout(() => {
+            if (callback) callback();
+        }, 1800);
     }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const form = document.getElementById('loginForm');
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                triggerPostLoginLoader(() => {
+                    HTMLFormElement.prototype.submit.call(form);
+                });
+            });
+        }
+    });
 </script>
 
 <!-- Beautiful Google Sign-In Modal (Safe Simulated Local Flow) -->
