@@ -91,7 +91,11 @@ def predict():
             'amount': amount,
             'type': str(type_).lower(),
             'category': str(category),
-            'hour': hour
+            'hour': hour,
+            'day_of_week': data.get('day_of_week', 0),
+            'is_weekend': data.get('is_weekend', 0),
+            'txns_last_24h': data.get('txns_last_24h', 0),
+            'amount_last_24h': data.get('amount_last_24h', 0.0)
         }
         
         # Perform inference

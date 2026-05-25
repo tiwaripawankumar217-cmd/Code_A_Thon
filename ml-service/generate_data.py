@@ -8,22 +8,28 @@ def generate_synthetic_data(filepath, num_records=1000):
     
     with open(filepath, mode='w', newline='') as file:
         writer = csv.writer(file)
-        writer.writerow(['amount', 'type', 'category', 'hour', 'is_anomaly'])
+        writer.writerow(['amount', 'type', 'category', 'hour', 'day_of_week', 'is_weekend', 'txns_last_24h', 'amount_last_24h', 'is_anomaly'])
         
         # Generate normal records (96% of the data)
         for _ in range(int(num_records * 0.96)):
             category = random.choices(categories, weights=[0.35, 0.05, 0.25, 0.15, 0.05, 0.15])[0]
-            hour = int(random.gauss(15, 4)) % 24  # normally distributed around 3 PM
-            if hour < 0:
-                hour = 0
-            elif hour > 23:
-                hour = 23
+            hour = int(random.gauss(15, 4)) % 24
+            if hour < 0: hour = 0
+            elif hour > 23: hour = 23
                 
+            day_of_week = random.randint(0, 6)
+            is_weekend = 1 if day_of_week >= 5 else 0
+            
+            # Normal velocity
+            txns_last_24h = random.randint(0, 3)
+            amount_last_24h = round(random.uniform(0, 200), 2)
+            
             if category == 'Salary':
                 amount = round(random.uniform(3000, 8000), 2)
                 type_ = 'income'
-                # Salary typically during business hours
                 hour = random.randint(9, 17)
+                day_of_week = random.randint(0, 4) # Weekdays
+                is_weekend = 0
             elif category == 'Rent':
                 amount = round(random.uniform(1200, 2500), 2)
                 type_ = 'expense'
@@ -31,13 +37,12 @@ def generate_synthetic_data(filepath, num_records=1000):
             elif category == 'Groceries':
                 amount = round(random.uniform(15, 250), 2)
                 type_ = 'expense'
-                # Shopping typically daytime/evening
                 hour = random.randint(8, 21)
             elif category == 'Entertainment':
                 amount = round(random.uniform(10, 150), 2)
                 type_ = 'expense'
-                # Entertainment can go late, but usually small/moderate amounts
                 hour = random.choices([random.randint(12, 23), random.randint(0, 2)], weights=[0.8, 0.2])[0]
+                if is_weekend: amount *= 1.5 # Higher on weekends
             elif category == 'Transfer':
                 amount = round(random.uniform(20, 500), 2)
                 type_ = random.choice(['income', 'expense'])
@@ -47,30 +52,43 @@ def generate_synthetic_data(filepath, num_records=1000):
                 type_ = 'expense'
                 hour = random.randint(8, 22)
                 
-            writer.writerow([amount, type_, category, hour, 0])
+            writer.writerow([amount, type_, category, hour, day_of_week, is_weekend, txns_last_24h, amount_last_24h, 0])
             
         # Generate anomalous records (4% of the data)
         for _ in range(int(num_records * 0.04)):
-            # Anomaly Type 1: High transfer at late night
-            anomaly_type = random.choice(['high_transfer_night', 'high_entertainment_night', 'huge_expense_day'])
+            anomaly_type = random.choice(['high_transfer_night', 'high_entertainment_night', 'huge_expense_day', 'card_testing_velocity'])
+            
+            day_of_week = random.randint(0, 6)
+            is_weekend = 1 if day_of_week >= 5 else 0
+            txns_last_24h = random.randint(0, 2)
+            amount_last_24h = round(random.uniform(0, 100), 2)
             
             if anomaly_type == 'high_transfer_night':
                 amount = round(random.uniform(4000, 9999), 2)
                 category = 'Transfer'
                 type_ = 'expense'
-                hour = random.randint(1, 4)  # 1 AM to 4 AM
+                hour = random.randint(1, 4)
             elif anomaly_type == 'high_entertainment_night':
                 amount = round(random.uniform(2500, 6000), 2)
                 category = 'Entertainment'
                 type_ = 'expense'
-                hour = random.randint(2, 5)  # 2 AM to 5 AM
+                hour = random.randint(2, 5)
+                day_of_week = random.randint(0, 4) # Weekday night out is weirder
+                is_weekend = 0
+            elif anomaly_type == 'card_testing_velocity':
+                amount = round(random.uniform(1, 5), 2)
+                category = 'Other'
+                type_ = 'expense'
+                hour = random.randint(0, 23)
+                txns_last_24h = random.randint(7, 15) # Extremely high velocity
+                amount_last_24h = round(random.uniform(10, 50), 2)
             else:  # huge_expense_day
                 amount = round(random.uniform(8000, 15000), 2)
                 category = random.choice(['Groceries', 'Other', 'Entertainment'])
                 type_ = 'expense'
                 hour = random.randint(10, 18)
                 
-            writer.writerow([amount, type_, category, hour, 1])
+            writer.writerow([amount, type_, category, hour, day_of_week, is_weekend, txns_last_24h, amount_last_24h, 1])
 
     print(f"✅ Generated {num_records} synthetic transactions at {filepath}")
 
