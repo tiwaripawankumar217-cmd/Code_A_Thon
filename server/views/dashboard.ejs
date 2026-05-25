@@ -111,28 +111,28 @@
                         </div>
                         <!-- Bars Container -->
                         <div class="absolute left-12 right-0 top-0 bottom-6 flex justify-around items-end z-10 pl-4">
-                            <!-- Group 1 -->
-                            <div class="flex gap-2 items-end h-full w-full justify-center group">
-                                <div class="w-8 md:w-12 bg-primary-container/40 rounded-t-md h-[80%] hover:bg-primary-container/60 transition-all relative">
-                                    <div class="absolute -top-8 left-1/2 -translate-x-1/2 bg-inverse-surface text-on-secondary-container text-xs py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity">8.2k</div>
+                            <% 
+                                let chartBars = [
+                                    { processedHeight: 80, preventedHeight: 30, processedLabel: '8.2k', preventedLabel: '3.0k' },
+                                    { processedHeight: 60, preventedHeight: 25, processedLabel: '6.0k', preventedLabel: '2.5k' },
+                                    { processedHeight: 90, preventedHeight: 40, processedLabel: '9.0k', preventedLabel: '4.0k' },
+                                    { processedHeight: 70, preventedHeight: 20, processedLabel: '7.0k', preventedLabel: '2.0k' }
+                                ];
+                                if (typeof weeklyChartData !== 'undefined' && weeklyChartData && weeklyChartData.length === 4) {
+                                    chartBars = weeklyChartData;
+                                }
+                            %>
+                            <% chartBars.forEach(function(bar, index) { %>
+                                <!-- Group <%= index + 1 %> -->
+                                <div class="flex gap-2 items-end h-full w-full justify-center group">
+                                    <div class="w-8 md:w-12 bg-primary-container/40 rounded-t-md hover:bg-primary-container/60 transition-all relative" style="height: <%= bar.processedHeight %>%">
+                                        <div class="absolute -top-8 left-1/2 -translate-x-1/2 bg-inverse-surface text-on-secondary-container text-xs py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap"><%= bar.processedLabel %></div>
+                                    </div>
+                                    <div class="w-8 md:w-12 bg-primary rounded-t-md hover:bg-primary/80 transition-all relative" style="height: <%= bar.preventedHeight %>%">
+                                        <div class="absolute -top-8 left-1/2 -translate-x-1/2 bg-inverse-surface text-on-secondary-container text-xs py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap"><%= bar.preventedLabel %></div>
+                                    </div>
                                 </div>
-                                <div class="w-8 md:w-12 bg-primary rounded-t-md h-[30%] hover:bg-primary/80 transition-all"></div>
-                            </div>
-                            <!-- Group 2 -->
-                            <div class="flex gap-2 items-end h-full w-full justify-center group">
-                                <div class="w-8 md:w-12 bg-primary-container/40 rounded-t-md h-[60%] hover:bg-primary-container/60 transition-all"></div>
-                                <div class="w-8 md:w-12 bg-primary rounded-t-md h-[25%] hover:bg-primary/80 transition-all"></div>
-                            </div>
-                            <!-- Group 3 -->
-                            <div class="flex gap-2 items-end h-full w-full justify-center group">
-                                <div class="w-8 md:w-12 bg-primary-container/40 rounded-t-md h-[90%] hover:bg-primary-container/60 transition-all"></div>
-                                <div class="w-8 md:w-12 bg-primary rounded-t-md h-[40%] hover:bg-primary/80 transition-all"></div>
-                            </div>
-                            <!-- Group 4 -->
-                            <div class="flex gap-2 items-end h-full w-full justify-center group">
-                                <div class="w-8 md:w-12 bg-primary-container/40 rounded-t-md h-[70%] hover:bg-primary-container/60 transition-all"></div>
-                                <div class="w-8 md:w-12 bg-primary rounded-t-md h-[20%] hover:bg-primary/80 transition-all"></div>
-                            </div>
+                            <% }) %>
                         </div>
                         <!-- X-Axis Labels -->
                         <div class="absolute bottom-0 left-12 right-0 flex justify-around text-xs text-on-surface-variant font-medium pt-2 border-t border-outline-variant/30 font-bold">
@@ -161,6 +161,17 @@
                         <h3 class="font-title-md text-title-md text-on-background">Risk Vectors</h3>
                         <span class="material-symbols-outlined text-on-surface-variant text-[20px]">info</span>
                     </div>
+                    <%
+                        let activeRisk = {
+                            accountTakeoverPercent: 45,
+                            paymentFraudPercent: 30,
+                            identitySpoofingPercent: 15,
+                            otherThreatsPercent: 10
+                        };
+                        if (typeof riskVectors !== 'undefined' && riskVectors) {
+                            activeRisk = riskVectors;
+                        }
+                    %>
                     <div class="flex-grow overflow-y-auto pr-2 space-y-6">
                         <!-- Vector 1 -->
                         <div>
@@ -169,10 +180,10 @@
                                     <span class="material-symbols-outlined text-secondary text-[20px]">lock_person</span>
                                     <span class="font-medium text-sm text-on-surface">Account Takeover</span>
                                 </div>
-                                <span class="font-bold text-sm text-on-background">45%</span>
+                                <span class="font-bold text-sm text-on-background"><%= activeRisk.accountTakeoverPercent %>%</span>
                             </div>
                             <div class="w-full bg-surface-variant rounded-full h-2">
-                                <div class="bg-secondary h-2 rounded-full" style="width: 45%"></div>
+                                <div class="bg-secondary h-2 rounded-full transition-all duration-500" style="width: <%= activeRisk.accountTakeoverPercent %>%"></div>
                             </div>
                         </div>
                         <!-- Vector 2 -->
@@ -182,10 +193,10 @@
                                     <span class="material-symbols-outlined text-primary-container text-[20px]">credit_card_off</span>
                                     <span class="font-medium text-sm text-on-surface">Payment Fraud</span>
                                 </div>
-                                <span class="font-bold text-sm text-on-background">30%</span>
+                                <span class="font-bold text-sm text-on-background"><%= activeRisk.paymentFraudPercent %>%</span>
                             </div>
                             <div class="w-full bg-surface-variant rounded-full h-2">
-                                <div class="bg-primary-container h-2 rounded-full" style="width: 30%"></div>
+                                <div class="bg-primary-container h-2 rounded-full transition-all duration-500" style="width: <%= activeRisk.paymentFraudPercent %>%"></div>
                             </div>
                         </div>
                         <!-- Vector 3 -->
@@ -195,10 +206,10 @@
                                     <span class="material-symbols-outlined text-tertiary text-[20px]">masks</span>
                                     <span class="font-medium text-sm text-on-surface">Identity Spoofing</span>
                                 </div>
-                                <span class="font-bold text-sm text-on-background">15%</span>
+                                <span class="font-bold text-sm text-on-background"><%= activeRisk.identitySpoofingPercent %>%</span>
                             </div>
                             <div class="w-full bg-surface-variant rounded-full h-2">
-                                <div class="bg-tertiary h-2 rounded-full" style="width: 15%"></div>
+                                <div class="bg-tertiary h-2 rounded-full transition-all duration-500" style="width: <%= activeRisk.identitySpoofingPercent %>%"></div>
                             </div>
                         </div>
                         <!-- Vector 4 -->
@@ -208,10 +219,10 @@
                                     <span class="material-symbols-outlined text-outline text-[20px]">more_horiz</span>
                                     <span class="font-medium text-sm text-on-surface">Other Threats</span>
                                 </div>
-                                <span class="font-bold text-sm text-on-background">10%</span>
+                                <span class="font-bold text-sm text-on-background"><%= activeRisk.otherThreatsPercent %>%</span>
                             </div>
                             <div class="w-full bg-surface-variant rounded-full h-2">
-                                <div class="bg-outline h-2 rounded-full" style="width: 10%"></div>
+                                <div class="bg-outline h-2 rounded-full transition-all duration-500" style="width: <%= activeRisk.otherThreatsPercent %>%"></div>
                             </div>
                         </div>
                     </div>
@@ -297,18 +308,5 @@
         }, 8000);
     }
 
-    // Connect Server-Sent Events (SSE) listener
-    if (typeof EventSource !== "undefined") {
-        const eventSource = new EventSource("/stream");
-        eventSource.onmessage = function(event) {
-            try {
-                const data = JSON.parse(event.data);
-                if (data.type === 'fraud_alert') {
-                    showFraudToast(data);
-                }
-            } catch (err) {
-                console.error("Error parsing SSE data:", err);
-            }
-        };
-    }
 </script>
+<script src="/js/sse.js"></script>

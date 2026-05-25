@@ -30,15 +30,15 @@
                         <div class="flex items-baseline gap-3">
                             <!-- In EJS we default to mock values if variables are not passed from backend -->
                             <span class="font-display-lg text-display-lg text-on-background">
-                                $<%= (typeof spentTotal !== 'undefined') ? spentTotal.toLocaleString(undefined, {minimumFractionDigits: 0}) : '12,450' %>
+                                $<%= (typeof spentTotal !== 'undefined') ? spentTotal.toLocaleString(undefined, {minimumFractionDigits: 0}) : '0' %>
                             </span>
                             <span class="font-body-lg text-body-lg text-on-surface-variant">
-                                / $<%= (typeof limitTotal !== 'undefined') ? limitTotal.toLocaleString(undefined, {minimumFractionDigits: 0}) : '15,000' %> Limit
+                                / $<%= (typeof limitTotal !== 'undefined') ? limitTotal.toLocaleString(undefined, {minimumFractionDigits: 0}) : '0' %> Limit
                             </span>
                         </div>
                     </div>
                     <% 
-                        let overallPercent = 83; 
+                        let overallPercent = 0; 
                         if (typeof spentTotal !== 'undefined' && typeof limitTotal !== 'undefined' && limitTotal > 0) {
                             overallPercent = Math.round((spentTotal / limitTotal) * 100);
                         }
@@ -51,15 +51,41 @@
 
                 <!-- Horizontal Multi-segment Progress -->
                 <div class="relative z-10">
+                    <%
+                        let segments = [];
+                        if (typeof limitTotal !== 'undefined' && limitTotal > 0 && typeof categorySpent !== 'undefined') {
+                            const colors = ['bg-primary', 'bg-tertiary', 'bg-outline', 'bg-secondary', 'bg-error'];
+                            let colorIdx = 0;
+                            for (const [cat, spent] of Object.entries(categorySpent)) {
+                                if (spent > 0) {
+                                    const width = (spent / limitTotal) * 100;
+                                    segments.push({
+                                        category: cat,
+                                        width: width,
+                                        colorClass: colors[colorIdx % colors.length]
+                                    });
+                                    colorIdx++;
+                                }
+                            }
+                        }
+                    %>
                     <div class="flex justify-between font-label-md text-label-md text-on-surface-variant mb-3 px-1">
-                        <span>Groceries</span>
-                        <span>Rent</span>
-                        <span>Other</span>
+                        <% if (segments.length > 0) { %>
+                            <% segments.forEach(function(seg) { %>
+                                <span><%= seg.category %></span>
+                            <% }) %>
+                        <% } else { %>
+                            <span>No active spend segments</span>
+                        <% } %>
                     </div>
                     <div class="h-4 w-full bg-surface-container-high rounded-full overflow-hidden flex shadow-inner">
-                        <div class="bg-primary h-full" style="width: 35%" title="Groceries: 35%"></div>
-                        <div class="bg-tertiary h-full border-l border-white/20" style="width: 40%" title="Rent: 40%"></div>
-                        <div class="bg-outline h-full border-l border-white/20" style="width: 15%" title="Other: 15%"></div>
+                        <% if (segments.length > 0) { %>
+                            <% segments.forEach(function(seg, idx) { %>
+                                <div class="<%= seg.colorClass %> h-full <%= idx > 0 ? 'border-l border-white/20' : '' %>" style="width: <%= seg.width %>%" title="<%= seg.category %>: <%= Math.round(seg.width) %>%"></div>
+                            <% }) %>
+                        <% } else { %>
+                            <div class="bg-outline-variant/20 h-full w-full" title="No budget utilization"></div>
+                        <% } %>
                     </div>
                 </div>
             </div>
@@ -98,10 +124,10 @@
             <% 
                 // Default mock budget array if no budgets are supplied from database query
                 let activeBudgets = [
-                    { category: 'Groceries', spent: 325, limitAmount: 500, percent: 65, colorClass: 'text-primary' },
-                    { category: 'Rent', spent: 528, limitAmount: 600, percent: 88, colorClass: 'text-tertiary' },
-                    { category: 'Entertainment', spent: 285, limitAmount: 250, percent: 114, colorClass: 'text-secondary font-bold' },
-                    { category: 'Other', spent: 63, limitAmount: 150, percent: 42, colorClass: 'text-outline' }
+                    { category: 'Groceries', spent: 0, limitAmount: 0, percent: 0, colorClass: 'text-primary' },
+                    { category: 'Rent', spent: 0, limitAmount: 0, percent: 0, colorClass: 'text-tertiary' },
+                    { category: 'Entertainment', spent: 0, limitAmount: 0, percent: 0, colorClass: 'text-outline' },
+                    { category: 'Other', spent: 0, limitAmount: 0, percent: 0, colorClass: 'text-outline' }
                 ];
                 
                 if (typeof budgets !== 'undefined' && budgets.length > 0) {

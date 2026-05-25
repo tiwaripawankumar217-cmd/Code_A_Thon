@@ -2,7 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const session = require('express-session');
-const MongoStore = require('connect-mongo');
+const { MongoStore } = require('connect-mongo');
 const passport = require('passport');
 const LocalStrategy = require('passport-local').Strategy;
 const path = require('path');
@@ -53,28 +53,47 @@ passport.use(new LocalStrategy(User.authenticate()));
 passport.serializeUser(User.serializeUser());
 passport.deserializeUser(User.deserializeUser());
 
-// Make currentUser available in all templates
+// Make currentUser and activePage available in all templates
 app.use((req, res, next) => {
     res.locals.currentUser = req.user;
+    res.locals.activePage = req.originalUrl ? req.originalUrl.split('?')[0] : '';
     next();
 });
 
 // --- Routes ---
 const authRoutes = require('./server/routes/auth');
+const transactionsRoutes = require('./server/routes/transactions');
+const dashboardRoutes = require('./server/routes/dashboard');
+const budgetRoutes = require('./server/routes/budget');
 const { isLoggedIn } = require('./server/middleware/auth');
 
 app.use('/auth', authRoutes);
+app.use('/transactions', transactionsRoutes);
+app.use('/budgets', budgetRoutes);
+app.use('/', dashboardRoutes);
 
 app.get('/', (req, res) => {
     res.redirect('/auth/login');
 });
 
-app.get('/dashboard', isLoggedIn, (req, res) => {
-    res.render('dashboard');
+// SSE Placeholder to satisfy EventSource connections on frontend and prevent errors
+app.get('/stream', isLoggedIn, (req, res) => {
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.flushHeaders();
+
+    const interval = setInterval(() => {
+        res.write('data: {"type": "ping"}\n\n');
+    }, 30000);
+
+    req.on('close', () => {
+        clearInterval(interval);
+    });
 });
 
 // --- Server Start ---
 
-app.listen(3000,()=>{
+app.listen(3200,()=>{
     console.log("server is running on port 3000")
 })

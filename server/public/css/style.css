@@ -1,0 +1,192 @@
+/* ============================================================
+   FraudGuard — Global Stylesheet
+   Compiled from all stitch-design HTML pages
+   ============================================================ */
+
+/* --- Material Symbols default settings --- */
+.material-symbols-outlined {
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+/* ============================================================
+   GLASSMORPHISM CARDS
+   ============================================================ */
+.glass-card {
+    background: rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 10px 40px -10px rgba(184, 134, 11, 0.08);
+}
+
+/* ============================================================
+   AMBIENT BACKGROUND ORBS
+   ============================================================ */
+.ambient-orb {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(100px);
+    z-index: -1;
+    opacity: 0.6;
+    pointer-events: none;
+    animation: float 20s infinite alternate;
+}
+
+/* Named orb variants used across pages */
+.orb-1 {
+    width: 400px;
+    height: 400px;
+    background: #FFEDEA;
+    top: -100px;
+    right: -100px;
+}
+
+.orb-2 {
+    width: 500px;
+    height: 500px;
+    background: #FFF8E7;
+    bottom: -200px;
+    left: -100px;
+}
+
+/* Login / Register page orbs */
+.bg-orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(100px);
+    opacity: 0.6;
+    z-index: 0;
+    animation: float 20s ease-in-out infinite alternate;
+}
+
+/* Budget page orb variant */
+.orb-bg {
+    position: fixed;
+    width: 600px;
+    height: 600px;
+    border-radius: 50%;
+    filter: blur(100px);
+    z-index: -1;
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+@keyframes float {
+    0%   { transform: translate(0, 0) scale(1); }
+    33%  { transform: translate(30px, -50px) scale(1.1); }
+    66%  { transform: translate(-20px, 20px) scale(0.9); }
+    100% { transform: translate(0, 0) scale(1); }
+}
+
+/* ============================================================
+   TILT CARD (Login / Dashboard cards)
+   ============================================================ */
+.tilt-card {
+    transition: transform 0.1s ease-out;
+    transform-style: preserve-3d;
+}
+
+/* ============================================================
+   BAR CHART BACKGROUND GRID (Dashboard)
+   ============================================================ */
+.bar-chart-bg {
+    background: repeating-linear-gradient(
+        to top,
+        transparent,
+        transparent 39px,
+        rgba(228, 226, 225, 0.5) 39px,
+        rgba(228, 226, 225, 0.5) 40px
+    );
+}
+
+/* ============================================================
+   PRIMARY BUTTON
+   ============================================================ */
+.btn-primary {
+    background: linear-gradient(180deg, #ff8555 0%, #ff6b35 100%);
+    box-shadow: 0 4px 14px 0 rgba(255, 107, 53, 0.39);
+    transition: all 0.2s ease;
+}
+
+.btn-primary:hover {
+    box-shadow: 0 6px 20px 0 rgba(255, 107, 53, 0.45);
+}
+
+.btn-primary:active {
+    transform: translateY(1px);
+    box-shadow: 0 2px 8px 0 rgba(255, 107, 53, 0.39);
+}
+
+/* ============================================================
+   PREMIUM INPUT FIELDS (Transactions / Budgets)
+   ============================================================ */
+.input-premium {
+    background-color: #FAF7F2;
+    border: 1px solid rgba(141, 113, 104, 0.2);
+    transition: all 0.2s ease;
+}
+
+.input-premium:focus {
+    border-color: #FF4E50;
+    box-shadow: 0 0 0 2px rgba(255, 78, 80, 0.1);
+    outline: none;
+}
+
+/* ============================================================
+   TABLE ROW HOVER (Transactions table)
+   ============================================================ */
+tr {
+    transition: background-color 0.2s ease;
+}
+
+tr:hover {
+    background-color: rgba(240, 237, 237, 0.5);
+}
+
+/* ============================================================
+   BUDGET CIRCULAR SVG RING PROGRESS
+   ============================================================ */
+.progress-ring__circle {
+    transition: stroke-dashoffset 1s ease-in-out;
+    transform: rotate(-90deg);
+    transform-origin: 50% 50%;
+}
+
+/* ============================================================
+   PULSE ANIMATION (Budget compliance warning dot)
+   ============================================================ */
+.pulse-ring {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.5; }
+}
+
+/* ============================================================
+   FRAUD TOAST (SSE real-time alert slide-in)
+   ============================================================ */
+.slide-in {
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(100px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* ============================================================
+   SIDEBAR ACTIVE LINK HIGHLIGHT
+   ============================================================ */
+nav a.active-nav {
+    background: rgba(255, 107, 53, 0.15);
+    color: #5f1900;
+    font-weight: 700;
+}

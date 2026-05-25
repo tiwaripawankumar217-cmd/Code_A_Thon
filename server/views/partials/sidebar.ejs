@@ -16,16 +16,16 @@
         </div>
     </div>
     <div class="flex-1 space-y-2">
-        <a class="bg-primary-container/20 text-on-primary-container font-bold rounded-lg px-4 py-3 flex items-center gap-3 hover:bg-surface-container-highest transition-all duration-300 hover:translate-x-1" href="/dashboard">
-            <span class="material-symbols-outlined">dashboard</span>
+        <a class="<%= (typeof activePage !== 'undefined' && (activePage === '/dashboard' || activePage === '/')) ? 'bg-primary-container/20 text-on-primary-container font-bold' : 'text-on-surface-variant hover:text-on-surface' %> rounded-lg px-4 py-3 flex items-center gap-3 hover:bg-surface-container-highest transition-all duration-300 hover:translate-x-1" href="/dashboard">
+            <span class="material-symbols-outlined" style="<%= (typeof activePage !== 'undefined' && (activePage === '/dashboard' || activePage === '/')) ? 'font-variation-settings: \'FILL\' 1;' : '' %>">dashboard</span>
             Dashboard
         </a>
-        <a class="text-on-surface-variant hover:text-on-surface px-4 py-3 flex items-center gap-3 transition-all hover:bg-surface-container-highest duration-300 hover:translate-x-1" href="/transactions">
-            <span class="material-symbols-outlined">receipt_long</span>
+        <a class="<%= (typeof activePage !== 'undefined' && activePage.startsWith('/transactions')) ? 'bg-primary-container/20 text-on-primary-container font-bold' : 'text-on-surface-variant hover:text-on-surface' %> rounded-lg px-4 py-3 flex items-center gap-3 hover:bg-surface-container-highest transition-all duration-300 hover:translate-x-1" href="/transactions">
+            <span class="material-symbols-outlined" style="<%= (typeof activePage !== 'undefined' && activePage.startsWith('/transactions')) ? 'font-variation-settings: \'FILL\' 1;' : '' %>">receipt_long</span>
             Transactions
         </a>
-        <a class="text-on-surface-variant hover:text-on-surface px-4 py-3 flex items-center gap-3 transition-all hover:bg-surface-container-highest duration-300 hover:translate-x-1" href="/budgets">
-            <span class="material-symbols-outlined">analytics</span>
+        <a class="<%= (typeof activePage !== 'undefined' && activePage.startsWith('/budgets')) ? 'bg-primary-container/20 text-on-primary-container font-bold' : 'text-on-surface-variant hover:text-on-surface' %> rounded-lg px-4 py-3 flex items-center gap-3 hover:bg-surface-container-highest transition-all duration-300 hover:translate-x-1" href="/budgets">
+            <span class="material-symbols-outlined" style="<%= (typeof activePage !== 'undefined' && activePage.startsWith('/budgets')) ? 'font-variation-settings: \'FILL\' 1;' : '' %>">analytics</span>
             Budgets
         </a>
     </div>
