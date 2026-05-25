@@ -1,0 +1,255 @@
+<% layout('layouts/boilerplate') -%>
+
+<!-- SideNavBar and Mobile TopBar (Partials) -->
+<%- include('partials/sidebar') %>
+
+<div class="flex h-screen overflow-hidden w-full">
+    <!-- Main Content -->
+    <main class="flex-grow ml-0 md:ml-64 pt-24 md:pt-8 pb-24 px-margin-mobile md:px-container-padding max-w-[1440px] mx-auto overflow-y-auto relative">
+        
+        <!-- Header -->
+        <div class="mb-section-gap">
+            <h1 class="font-display-lg text-display-lg text-on-background mb-2">Transactions</h1>
+            <p class="font-body-lg text-body-lg text-on-surface-variant">Monitor, add, and analyze your financial activities.</p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-gutter w-full">
+            <!-- New Transaction Entry Card (Left Column) -->
+            <div class="lg:col-span-4 flex flex-col gap-gutter w-full">
+                <div class="glass-card rounded-xl p-container-padding">
+                    <h2 class="font-title-md text-title-md text-on-surface mb-6 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-primary">add_circle</span>
+                        New Entry
+                    </h2>
+                    
+                    <form action="/transactions" method="POST" class="flex flex-col gap-4">
+                        <!-- Merchant / Description -->
+                        <div>
+                            <label class="font-label-md text-label-md text-on-surface-variant block mb-1 uppercase tracking-wider" for="description">Description / Merchant</label>
+                            <input class="w-full input-premium rounded-lg px-4 py-3 font-body-lg text-body-lg text-on-surface placeholder-outline focus:ring-0" id="description" name="description" placeholder="e.g. AWS Cloud Hosting" required type="text"/>
+                        </div>
+
+                        <!-- Amount -->
+                        <div>
+                            <label class="font-label-md text-label-md text-on-surface-variant block mb-1 uppercase tracking-wider" for="amount">Amount (USD)</label>
+                            <div class="relative">
+                                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant material-symbols-outlined" style="font-size: 18px;">attach_money</span>
+                                <input class="w-full input-premium rounded-lg pl-10 pr-4 py-3 font-body-lg text-body-lg text-on-surface focus:ring-0" id="amount" name="amount" placeholder="0.00" step="0.01" min="0.01" required type="number"/>
+                            </div>
+                        </div>
+
+                        <!-- Type (Income vs Expense) -->
+                        <div>
+                            <label class="font-label-md text-label-md text-on-surface-variant block mb-1 uppercase tracking-wider" for="type">Transaction Type</label>
+                            <select class="w-full input-premium rounded-lg px-4 py-3 font-body-lg text-body-lg text-on-surface focus:ring-0 appearance-none" id="type" name="type" required>
+                                <option value="expense">Expense</option>
+                                <option value="income">Income</option>
+                            </select>
+                        </div>
+
+                        <!-- Category -->
+                        <div>
+                            <label class="font-label-md text-label-md text-on-surface-variant block mb-1 uppercase tracking-wider" for="category">Category</label>
+                            <select class="w-full input-premium rounded-lg px-4 py-3 font-body-lg text-body-lg text-on-surface focus:ring-0 appearance-none" id="category" name="category" required>
+                                <option disabled selected value="">Select Category</option>
+                                <option value="Groceries">Groceries</option>
+                                <option value="Rent">Rent</option>
+                                <option value="Entertainment">Entertainment</option>
+                                <option value="Transfer">Transfer</option>
+                                <option value="Salary">Salary</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <button class="btn-primary text-white font-title-md text-body-lg rounded-lg py-4 mt-4 flex items-center justify-center gap-2 transition-all w-full" type="submit">
+                            <span class="material-symbols-outlined text-sm">add</span>
+                            Add Record
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Quick Stats: Flagged Count -->
+                <div class="glass-card rounded-xl p-container-padding flex items-center justify-between">
+                    <div>
+                        <p class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider mb-1">Flagged Transactions</p>
+                        <p class="font-headline-lg text-headline-lg text-secondary">
+                            <%= (typeof transactions !== 'undefined') ? transactions.filter(t => t.isFlagged).length : '0' %>
+                        </p>
+                    </div>
+                    <div class="w-12 h-12 rounded-full bg-error-container flex items-center justify-center text-error">
+                        <span class="material-symbols-outlined">warning</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Activity Table (Right Column) -->
+            <div class="lg:col-span-8 w-full">
+                <div class="glass-card rounded-xl h-full flex flex-col w-full">
+                    <!-- Table Header Controls -->
+                    <div class="p-container-padding border-b border-outline-variant/30 flex justify-between items-center w-full">
+                        <h2 class="font-title-md text-title-md text-on-surface">Recent Activity</h2>
+                        <div class="flex gap-2">
+                            <button class="p-2 rounded-lg bg-surface-container-low text-on-surface-variant hover:bg-surface-container transition-colors border border-outline-variant/50">
+                                <span class="material-symbols-outlined text-sm">filter_list</span>
+                            </button>
+                            <div class="relative">
+                                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant material-symbols-outlined text-sm">search</span>
+                                <input class="input-premium rounded-lg pl-9 pr-4 py-2 font-body-sm text-body-sm w-48 focus:w-64 transition-all" id="tableSearch" placeholder="Search..." type="text" onkeyup="filterTable()"/>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Scrollable Table -->
+                    <div class="overflow-x-auto flex-grow w-full">
+                        <table class="w-full text-left border-collapse" id="txnTable">
+                            <thead>
+                                <tr class="bg-surface-container-lowest/50 border-b border-outline-variant/30">
+                                    <th class="py-4 px-6 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Date & Time</th>
+                                    <th class="py-4 px-6 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Description</th>
+                                    <th class="py-4 px-6 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Category</th>
+                                    <th class="py-4 px-6 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider text-right">Amount</th>
+                                    <th class="py-4 px-6 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider text-center">Status</th>
+                                    <th class="py-4 px-6 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="font-body-sm text-body-sm text-on-surface divide-y divide-outline-variant/20">
+                                <% if (typeof transactions !== 'undefined' && transactions.length > 0) { %>
+                                    <% transactions.forEach(function(txn) { %>
+                                        <!-- Row -->
+                                        <tr class="<%= txn.isFlagged ? 'border-l-2 border-l-error bg-error-container/5 hover:bg-error-container/10' : '' %>" id="row-<%= txn._id %>">
+                                            <td class="py-4 px-6">
+                                                <%= new Date(txn.date).toLocaleDateString('en-US', {month: 'short', day: 'numeric'}) %> 
+                                                <span class="text-xs text-on-surface-variant ml-1"><%= new Date(txn.date).toLocaleTimeString('en-US', {hour: '2-digit', minute:'2-digit', hour12: false}) %></span>
+                                            </td>
+                                            <td class="py-4 px-6 font-medium">
+                                                <%= txn.description %>
+                                            </td>
+                                            <td class="py-4 px-6">
+                                                <span class="px-2.5 py-1 rounded bg-surface-container-high/60 text-xs"><%= txn.category %></span>
+                                            </td>
+                                            <td class="py-4 px-6 text-right font-medium <%= txn.type === 'income' ? 'text-green-600' : 'text-secondary' %>">
+                                                <%= txn.type === 'income' ? '+' : '-' %>$<%= parseFloat(txn.amount).toLocaleString(undefined, {minimumFractionDigits: 2}) %>
+                                            </td>
+                                            <td class="py-4 px-6 text-center">
+                                                <% if (txn.isFlagged) { %>
+                                                    <button onclick="toggleDrawer('<%= txn._id %>')" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-error-container text-error text-xs font-semibold border border-error/20 hover:scale-105 active:scale-95 transition-all">
+                                                        <span class="material-symbols-outlined text-[14px]">warning</span> Flagged
+                                                    </button>
+                                                <% } else { %>
+                                                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-surface-container text-on-surface text-xs font-medium border border-outline-variant/50">
+                                                        <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span> Cleared
+                                                    </span>
+                                                <% } %>
+                                            </td>
+                                            <td class="py-4 px-6 text-right">
+                                                <div class="flex items-center justify-end gap-2">
+                                                    <% if (txn.isFlagged) { %>
+                                                        <button onclick="toggleDrawer('<%= txn._id %>')" class="text-primary hover:text-primary-container transition-colors" title="Review ML Assessment">
+                                                            <span class="material-symbols-outlined text-sm">fact_check</span>
+                                                        </button>
+                                                    <% } %>
+                                                    <!-- Simple form delete -->
+                                                    <form action="/transactions/<%= txn._id %>?_method=DELETE" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to delete this transaction?')">
+                                                        <button type="submit" class="text-on-surface-variant hover:text-secondary transition-colors" title="Delete">
+                                                            <span class="material-symbols-outlined text-sm">delete</span>
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <!-- Collapsible Drawer for flagged reasons (SHAP values) -->
+                                        <% if (txn.isFlagged) { %>
+                                            <tr id="drawer-<%= txn._id %>" class="hidden bg-error-container/5">
+                                                <td colspan="6" class="py-4 px-8 border-l-2 border-l-error">
+                                                    <div class="flex flex-col gap-2">
+                                                        <div class="flex items-center gap-2 text-error font-semibold text-xs">
+                                                            <span class="material-symbols-outlined text-sm">security</span>
+                                                            ML SERVICE RISK ANALYSIS (Isolation Forest Anomaly Score: <%= (txn.fraudScore * 100).toFixed(1) %>%)
+                                                        </div>
+                                                        <div class="text-xs text-on-surface-variant space-y-1.5 pl-6">
+                                                            <% if (txn.flagReasons && txn.flagReasons.length > 0) { %>
+                                                                <% txn.flagReasons.forEach(function(reason) { %>
+                                                                    <div>• <%= reason %></div>
+                                                                <% }) %>
+                                                            <% } else { %>
+                                                                <div>• Multi-dimensional spending anomaly detected.</div>
+                                                            <% } %>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        <% } %>
+                                    <% }) %>
+                                <% } else { %>
+                                    <!-- Empty State -->
+                                    <tr>
+                                        <td colspan="6" class="py-12 text-center text-on-surface-variant">
+                                            <span class="material-symbols-outlined text-4xl block mb-2 text-outline-variant">account_balance_wallet</span>
+                                            No transactions loaded. Add your first record to begin security monitoring!
+                                        </td>
+                                    </tr>
+                                <% } %>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- Mobile Bottom NavBar (Partial) -->
+<%- include('partials/mobile_nav') %>
+
+<script>
+    // Search Filter
+    function filterTable() {
+        const input = document.getElementById("tableSearch");
+        const filter = input.value.toLowerCase();
+        const tbody = document.querySelector("#txnTable tbody");
+        const rows = tbody.getElementsByTagName("tr");
+        
+        for (let i = 0; i < rows.length; i++) {
+            // Ignore drawer expansion rows in search indexing
+            if (rows[i].id.startsWith("drawer-")) continue;
+            
+            const descCell = rows[i].getElementsByTagName("td")[1];
+            const catCell = rows[i].getElementsByTagName("td")[2];
+            
+            if (descCell || catCell) {
+                const descText = descCell.textContent || descCell.innerText;
+                const catText = catCell.textContent || catCell.innerText;
+                
+                if (descText.toLowerCase().indexOf(filter) > -1 || catText.toLowerCase().indexOf(filter) > -1) {
+                    rows[i].style.display = "";
+                } else {
+                    rows[i].style.display = "none";
+                    // Also hide corresponding drawer if open
+                    const id = rows[i].id.replace("row-", "");
+                    const drawer = document.getElementById("drawer-" + id);
+                    if (drawer) drawer.style.display = "none";
+                }
+            }
+        }
+    }
+
+    // Toggle Flag Reasons Drawer
+    function toggleDrawer(id) {
+        const drawer = document.getElementById("drawer-" + id);
+        if (drawer) {
+            drawer.classList.toggle("hidden");
+        }
+    }
+
+    // Interactive Orb shifts
+    document.addEventListener('mousemove', (e) => {
+        const orbs = document.querySelectorAll('.ambient-orb');
+        if (orbs.length >= 2) {
+            const x = e.clientX / window.innerWidth;
+            const y = e.clientY / window.innerHeight;
+            orbs[0].style.transform = `translate(${x * 20}px, ${y * 20}px)`;
+            orbs[1].style.transform = `translate(${x * -30}px, ${y * -30}px)`;
+        }
+    });
+</script>
