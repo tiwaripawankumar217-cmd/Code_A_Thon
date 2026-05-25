@@ -105,35 +105,7 @@
             }
         }
     </script>
-    <style>
-        .glass-card {
-            background: rgba(255, 255, 255, 0.6);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-        }
-        
-        .bg-orb {
-            position: absolute;
-            border-radius: 50%;
-            filter: blur(100px);
-            opacity: 0.6;
-            z-index: 0;
-            animation: float 20s ease-in-out infinite alternate;
-        }
-
-        @keyframes float {
-            0% { transform: translate(0, 0) scale(1); }
-            33% { transform: translate(30px, -50px) scale(1.1); }
-            66% { transform: translate(-20px, 20px) scale(0.9); }
-            100% { transform: translate(0, 0) scale(1); }
-        }
-
-        .tilt-card {
-            transition: transform 0.1s ease-out;
-            transform-style: preserve-3d;
-        }
-    </style>
+    <link href="/css/style.css" rel="stylesheet"/>
 </head>
 <body class="bg-background min-h-screen flex items-center justify-center relative overflow-hidden font-body-lg text-on-surface">
     <!-- Flash Messages (if any) -->
