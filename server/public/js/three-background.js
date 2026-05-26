@@ -6,68 +6,123 @@ document.addEventListener('DOMContentLoaded', () => {
     const scene = new THREE.Scene();
     
     // Set up Camera
-    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.z = 150;
+    const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.z = 250;
+    // Shift globe slightly to the right on desktop, center on mobile
+    camera.position.x = window.innerWidth > 768 ? -50 : 0; 
 
-    // Set up Renderer with transparent background
+    // Set up Renderer
     const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    
-    // Crucial: make sure it doesn't block clicks!
     renderer.domElement.style.pointerEvents = 'none';
     container.appendChild(renderer.domElement);
 
-    // Variables for the Transaction Web
-    const particleCount = 120;
-    const maxDistance = 40; // Max distance to draw a connecting line
-    
-    // Geometry for particles
-    const particlesGeometry = new THREE.BufferGeometry();
-    const particlePositions = new Float32Array(particleCount * 3);
-    const particleVelocities = [];
-
-    // Distribute particles randomly in a wide 3D space
-    for (let i = 0; i < particleCount; i++) {
-        particlePositions[i * 3] = (Math.random() - 0.5) * 400;     // x
-        particlePositions[i * 3 + 1] = (Math.random() - 0.5) * 400; // y
-        particlePositions[i * 3 + 2] = (Math.random() - 0.5) * 200; // z
-
-        // Random velocities for drifting
-        particleVelocities.push({
-            x: (Math.random() - 0.5) * 0.2,
-            y: (Math.random() - 0.5) * 0.2,
-            z: (Math.random() - 0.5) * 0.2
-        });
-    }
-
-    particlesGeometry.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
-
-    // Material for Particles (Nodes)
-    // Using the brand orange color
-    const particlesMaterial = new THREE.PointsMaterial({
+    // ==========================================
+    // 1. DIGITAL GLOBE (Dotted Outer Shell)
+    // ==========================================
+    const globeGeometry = new THREE.SphereGeometry(80, 48, 48);
+    // Remove some vertices to make it look like a data mesh rather than a solid ball
+    const globeMaterial = new THREE.PointsMaterial({
         color: 0xff6b35,
-        size: 2.5,
+        size: 1.5,
         transparent: true,
-        opacity: 0.6,
-        sizeAttenuation: true
+        opacity: 0.5,
+        blending: THREE.AdditiveBlending
     });
+    const globe = new THREE.Points(globeGeometry, globeMaterial);
+    scene.add(globe);
 
-    const particlesMesh = new THREE.Points(particlesGeometry, particlesMaterial);
-    scene.add(particlesMesh);
-
-    // Geometry and Material for Lines (Connections)
-    const linesGeometry = new THREE.BufferGeometry();
-    const linesMaterial = new THREE.LineBasicMaterial({
+    // ==========================================
+    // 2. WIREFRAME CORE (Security Vault)
+    // ==========================================
+    const coreGeometry = new THREE.IcosahedronGeometry(70, 2);
+    const coreMaterial = new THREE.LineBasicMaterial({
         color: 0xff8555,
         transparent: true,
         opacity: 0.15
     });
+    const core = new THREE.LineSegments(
+        new THREE.WireframeGeometry(coreGeometry), 
+        coreMaterial
+    );
+    scene.add(core);
 
-    const linesMesh = new THREE.LineSegments(linesGeometry, linesMaterial);
-    scene.add(linesMesh);
+    // ==========================================
+    // 3. HOLOGRAPHIC RUPEE SIGN
+    // ==========================================
+    // Create a 2D canvas to draw the Rupee sign
+    const canvas = document.createElement('canvas');
+    canvas.width = 256;
+    canvas.height = 256;
+    const ctx = canvas.getContext('2d');
+    
+    // Draw glowing Rupee
+    ctx.clearRect(0, 0, 256, 256);
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.font = 'bold 160px sans-serif';
+    
+    // Core text
+    ctx.fillStyle = '#ff6b35';
+    // Glow effect
+    ctx.shadowColor = '#ff8555';
+    ctx.shadowBlur = 20;
+    ctx.fillText('₹', 128, 128);
+    // Double draw for stronger glow
+    ctx.fillText('₹', 128, 128);
 
-    // Mouse Parallax Interaction
+    const texture = new THREE.CanvasTexture(canvas);
+    const spriteMaterial = new THREE.SpriteMaterial({ 
+        map: texture, 
+        color: 0xffffff,
+        transparent: true,
+        opacity: 0.9,
+        blending: THREE.AdditiveBlending
+    });
+    const rupeeSprite = new THREE.Sprite(spriteMaterial);
+    rupeeSprite.scale.set(60, 60, 1);
+    scene.add(rupeeSprite);
+
+    // ==========================================
+    // 4. DATA PARTICLES ORBITING
+    // ==========================================
+    const orbitParticleCount = 100;
+    const orbitGeometry = new THREE.BufferGeometry();
+    const orbitPositions = new Float32Array(orbitParticleCount * 3);
+    const orbitAngles = [];
+
+    for (let i = 0; i < orbitParticleCount; i++) {
+        const theta = Math.random() * Math.PI * 2;
+        const phi = Math.acos((Math.random() * 2) - 1);
+        const radius = 90 + Math.random() * 20; // orbit outside the globe
+
+        orbitPositions[i * 3] = radius * Math.sin(phi) * Math.cos(theta);
+        orbitPositions[i * 3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
+        orbitPositions[i * 3 + 2] = radius * Math.cos(phi);
+
+        orbitAngles.push({
+            speed: (Math.random() - 0.5) * 0.02,
+            radius: radius,
+            theta: theta,
+            phi: phi
+        });
+    }
+
+    orbitGeometry.setAttribute('position', new THREE.BufferAttribute(orbitPositions, 3));
+    const orbitMaterial = new THREE.PointsMaterial({
+        color: 0xffb59d,
+        size: 2,
+        transparent: true,
+        opacity: 0.8,
+        blending: THREE.AdditiveBlending
+    });
+    const orbitParticles = new THREE.Points(orbitGeometry, orbitMaterial);
+    scene.add(orbitParticles);
+
+    // ==========================================
+    // ANIMATION & INTERACTION
+    // ==========================================
     let mouseX = 0;
     let mouseY = 0;
     let targetX = 0;
@@ -81,63 +136,40 @@ document.addEventListener('DOMContentLoaded', () => {
         mouseY = (event.clientY - windowHalfY);
     });
 
-    // Animation Loop
+    let time = 0;
+
     const animate = () => {
         requestAnimationFrame(animate);
+        time += 0.01;
 
-        // Smoothly interpolate camera position based on mouse (Parallax)
+        // Smooth mouse parallax
         targetX = mouseX * 0.05;
         targetY = mouseY * 0.05;
-        camera.position.x += (targetX - camera.position.x) * 0.02;
-        camera.position.y += (-targetY - camera.position.y) * 0.02;
-        camera.lookAt(scene.position);
+        scene.position.x += (targetX - scene.position.x) * 0.02;
+        scene.position.y += (-targetY - scene.position.y) * 0.02;
 
-        // Update particle positions
-        const positions = particlesGeometry.attributes.position.array;
+        // Rotate globe and core
+        globe.rotation.y += 0.002;
+        globe.rotation.x += 0.001;
         
-        for (let i = 0; i < particleCount; i++) {
-            positions[i * 3] += particleVelocities[i].x;
-            positions[i * 3 + 1] += particleVelocities[i].y;
-            positions[i * 3 + 2] += particleVelocities[i].z;
+        core.rotation.y -= 0.003;
+        core.rotation.z += 0.001;
 
-            // Bounce off boundaries to keep them on screen
-            if (Math.abs(positions[i * 3]) > 200) particleVelocities[i].x *= -1;
-            if (Math.abs(positions[i * 3 + 1]) > 200) particleVelocities[i].y *= -1;
-            if (Math.abs(positions[i * 3 + 2]) > 100) particleVelocities[i].z *= -1;
+        // Pulse the Rupee sprite slightly
+        const pulse = 1 + Math.sin(time * 2) * 0.05;
+        rupeeSprite.scale.set(60 * pulse, 60 * pulse, 1);
+
+        // Update orbiting particles
+        const positions = orbitGeometry.attributes.position.array;
+        for (let i = 0; i < orbitParticleCount; i++) {
+            const data = orbitAngles[i];
+            data.theta += data.speed;
+            
+            positions[i * 3] = data.radius * Math.sin(data.phi) * Math.cos(data.theta);
+            positions[i * 3 + 1] = data.radius * Math.sin(data.phi) * Math.sin(data.theta);
+            positions[i * 3 + 2] = data.radius * Math.cos(data.phi);
         }
-        particlesGeometry.attributes.position.needsUpdate = true;
-
-        // Calculate distances to draw lines
-        const linePositions = [];
-        const lineOpacities = [];
-        let connections = 0;
-
-        for (let i = 0; i < particleCount; i++) {
-            for (let j = i + 1; j < particleCount; j++) {
-                const dx = positions[i * 3] - positions[j * 3];
-                const dy = positions[i * 3 + 1] - positions[j * 3 + 1];
-                const dz = positions[i * 3 + 2] - positions[j * 3 + 2];
-                const distSq = dx * dx + dy * dy + dz * dz;
-
-                if (distSq < maxDistance * maxDistance) {
-                    // Add vertices for the line
-                    linePositions.push(
-                        positions[i * 3], positions[i * 3 + 1], positions[i * 3 + 2],
-                        positions[j * 3], positions[j * 3 + 1], positions[j * 3 + 2]
-                    );
-                    connections++;
-                }
-            }
-        }
-
-        // Update lines geometry
-        linesGeometry.setAttribute('position', new THREE.Float32BufferAttribute(linePositions, 3));
-        
-        // Very slow ambient rotation of the entire network
-        particlesMesh.rotation.y += 0.0005;
-        linesMesh.rotation.y += 0.0005;
-        particlesMesh.rotation.x += 0.0002;
-        linesMesh.rotation.x += 0.0002;
+        orbitGeometry.attributes.position.needsUpdate = true;
 
         renderer.render(scene, camera);
     };
@@ -149,5 +181,6 @@ document.addEventListener('DOMContentLoaded', () => {
         camera.aspect = window.innerWidth / window.innerHeight;
         camera.updateProjectionMatrix();
         renderer.setSize(window.innerWidth, window.innerHeight);
+        camera.position.x = window.innerWidth > 768 ? -50 : 0; 
     });
 });
